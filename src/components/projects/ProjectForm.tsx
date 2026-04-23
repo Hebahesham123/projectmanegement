@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
@@ -30,10 +30,18 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
     });
   }, [users]);
 
-  const hasTasks = useMemo(
-    () => !!initial?.id && tasks.some(x => x.project_id === initial.id),
+  const projectTasks = useMemo(
+    () => (initial?.id ? tasks.filter(x => x.project_id === initial.id) : []),
     [initial?.id, tasks]
   );
+  const hasTasks = projectTasks.length > 0;
+
+  // Average task completion
+  const tasksAvg = useMemo(() => {
+    if (projectTasks.length === 0) return null;
+    const total = projectTasks.reduce((s, x) => s + x.completion_percentage, 0);
+    return Math.round(total / projectTasks.length);
+  }, [projectTasks]);
 
   const [form, setForm] = useState({
     name: initial?.name ?? '',
@@ -67,6 +75,38 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
     }));
   }
 
+  // Date-based progress: (today - start) / (estimated_end - start)
+  const dateProgress = useMemo(() => {
+    if (!form.start_date || !form.estimated_end_date) return null;
+    const start = new Date(form.start_date).getTime();
+    const end = new Date(form.estimated_end_date).getTime();
+    if (end <= start) return null;
+    const now = Date.now();
+    if (now <= start) return 0;
+    if (now >= end) return 100;
+    return Math.round(((now - start) / (end - start)) * 100);
+  }, [form.start_date, form.estimated_end_date]);
+
+  // Derived completion — rules:
+  //   status = completed  → 100
+  //   has tasks           → average task completion
+  //   else (no tasks)     → date-based progress
+  //   else                → 0
+  const computedCompletion = useMemo(() => {
+    if (form.status === 'completed') return 100;
+    if (tasksAvg !== null) return tasksAvg;
+    if (dateProgress !== null) return dateProgress;
+    return 0;
+  }, [form.status, tasksAvg, dateProgress]);
+
+  // Keep form.completion_rate in sync with the computed value
+  useEffect(() => {
+    if (computedCompletion !== form.completion_rate) {
+      setForm(prev => ({ ...prev, completion_rate: computedCompletion }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [computedCompletion]);
+
   // Figure out which option is currently selected (by matching saved owner name/email)
   const selectedOwnerId = useMemo(() => {
     if (!form.owner_name && !form.owner_email) return '';
@@ -97,6 +137,9 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
         ...form,
         estimated_end_date: form.estimated_end_date || null,
         actual_end_date: form.actual_end_date || null,
+        // If admin entered an end date → manual (trigger won't touch it)
+        // If empty → auto (trigger computes it from tasks)
+        end_date_mode: form.actual_end_date ? 'manual' : 'auto',
         project_manager: form.project_manager || null,
         owner_name: form.owner_name || null,
         created_by: user?.id ?? null,
@@ -123,8 +166,6 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
     }
   }
 
-  const actualEndDisabled = form.end_date_mode === 'auto' && hasTasks;
-
   return (
     <form onSubmit={save} className="space-y-4">
       <div>
@@ -134,6 +175,33 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
       <div>
         <Label htmlFor="description">{t('project.description')}</Label>
         <Textarea id="description" value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} />
+      </div>
+
+      <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <h4 className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-200">Dates</h4>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div>
+            <Label htmlFor="start_date">Start date</Label>
+            <Input id="start_date" type="date" required value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} />
+          </div>
+          <div>
+            <Label htmlFor="estimated_end_date">Estimated end date</Label>
+            <Input id="estimated_end_date" type="date" value={form.estimated_end_date ?? ''} onChange={e => setForm({ ...form, estimated_end_date: e.target.value })} />
+          </div>
+          <div>
+            <Label htmlFor="actual_end_date">Actual end date</Label>
+            <Input
+              id="actual_end_date"
+              type="date"
+              value={form.actual_end_date ?? ''}
+              onChange={e => setForm({ ...form, actual_end_date: e.target.value })}
+              title="Leave empty to auto-calculate from tasks when all are done."
+            />
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          Leave <strong>Actual end date</strong> empty to let the system stamp it automatically when all tasks are done. Enter a date to override.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -202,65 +270,28 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
           </Select>
         </div>
         <div>
-          <Label htmlFor="completion">Completion %</Label>
-          <Input id="completion" type="number" min={0} max={100} value={form.completion_rate}
-                 onChange={e => setForm({ ...form, completion_rate: Number(e.target.value) })} />
+          <Label htmlFor="completion">
+            Completion %
+            <span className="ms-2 text-[11px] font-normal text-slate-400">
+              ({form.status === 'completed'
+                ? 'auto: 100'
+                : tasksAvg !== null
+                  ? 'auto: avg of tasks'
+                  : dateProgress !== null
+                    ? 'auto: elapsed time'
+                    : 'auto'})
+            </span>
+          </Label>
+          <Input
+            id="completion"
+            type="number"
+            min={0}
+            max={100}
+            value={form.completion_rate}
+            disabled
+            className="bg-slate-50 dark:bg-slate-800"
+          />
         </div>
-      </div>
-
-      <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-        <div className="mb-3 flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Dates</h4>
-          <div className="flex rounded-lg border border-slate-200 p-0.5 text-xs dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => setForm({ ...form, end_date_mode: 'auto' })}
-              className={`rounded-md px-2.5 py-1 font-medium transition ${form.end_date_mode === 'auto' ? 'bg-brand-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}
-            >
-              Auto (from tasks)
-            </button>
-            <button
-              type="button"
-              onClick={() => setForm({ ...form, end_date_mode: 'manual' })}
-              className={`rounded-md px-2.5 py-1 font-medium transition ${form.end_date_mode === 'manual' ? 'bg-brand-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}
-            >
-              Manual
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div>
-            <Label htmlFor="start_date">Start date</Label>
-            <Input id="start_date" type="date" required value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} />
-          </div>
-          <div>
-            <Label htmlFor="estimated_end_date">Estimated end date</Label>
-            <Input id="estimated_end_date" type="date" value={form.estimated_end_date ?? ''} onChange={e => setForm({ ...form, estimated_end_date: e.target.value })} />
-          </div>
-          <div>
-            <Label htmlFor="actual_end_date">
-              Actual end date
-              {actualEndDisabled && (
-                <span className="ms-2 text-[11px] font-normal text-slate-400">(auto from tasks)</span>
-              )}
-            </Label>
-            <Input
-              id="actual_end_date"
-              type="date"
-              value={form.actual_end_date ?? ''}
-              onChange={e => setForm({ ...form, actual_end_date: e.target.value })}
-              disabled={actualEndDisabled}
-              title={actualEndDisabled
-                ? 'Auto mode + tasks exist → end date is stamped when all tasks are done. Switch to Manual to override.'
-                : 'Pick the date when the project was/will be closed.'}
-            />
-          </div>
-        </div>
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          {form.end_date_mode === 'auto'
-            ? 'Auto mode: system calculates completion, status and end date from tasks.'
-            : 'Manual mode: you have full control — the system won\'t change the status or end date from tasks.'}
-        </p>
       </div>
 
       <div className="flex justify-end gap-2">

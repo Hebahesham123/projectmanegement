@@ -6,8 +6,9 @@ import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
-  title: 'Project Tracker',
+  title: 'NS Project Tracker',
   description: 'Enterprise project & task management dashboard',
+  icons: { icon: '/logo.svg' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

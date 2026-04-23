@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -10,7 +11,6 @@ import {
   Bell,
   Users,
   Settings,
-  Briefcase,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -33,8 +33,8 @@ export function Sidebar({ onClose, onNavigate }: { onClose?: () => void; onNavig
   return (
     <aside className="flex h-full w-64 flex-col border-e border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
       <div className="flex h-16 items-center gap-2.5 px-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white shadow-soft">
-          <Briefcase className="h-5 w-5" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white ring-1 ring-brand-100 shadow-soft dark:bg-slate-100">
+          <Image src="/logo.svg" alt="NS" width={28} height={28} className="h-7 w-7" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{t('app.name')}</div>

@@ -11,6 +11,8 @@ import { ProgressChart } from '@/components/dashboard/ProgressChart';
 import { UpcomingDeadlines } from '@/components/dashboard/UpcomingDeadlines';
 import { TasksProgress } from '@/components/dashboard/TasksProgress';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
+import { OwnersRanking } from '@/components/dashboard/OwnersRanking';
+import { TasksPerProjectCluster } from '@/components/dashboard/TasksPerProjectCluster';
 import { Card, CardHeader, CardTitle, CardBody } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -123,10 +125,21 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle>Tasks per project · by status</CardTitle></CardHeader>
+          <CardBody><TasksPerProjectCluster projects={projects} tasks={tasks} /></CardBody>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Owners & delays</CardTitle></CardHeader>
+          <CardBody><OwnersRanking projects={projects} tasks={tasks} /></CardBody>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card>
           <CardHeader><CardTitle>{t('widget.upcoming_deadlines')}</CardTitle></CardHeader>
-          <CardBody className="pt-2"><UpcomingDeadlines tasks={tasks} /></CardBody>
+          <CardBody className="pt-2"><UpcomingDeadlines tasks={tasks} projects={projects} /></CardBody>
         </Card>
         <Card>
           <CardHeader><CardTitle>Tasks Progress</CardTitle></CardHeader>

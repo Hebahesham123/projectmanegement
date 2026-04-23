@@ -22,7 +22,7 @@ export function ProgressChart({ projects }: { projects: Project[] }) {
         <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
         <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} />
         <Tooltip
-          cursor={{ fill: 'rgba(52, 120, 246, 0.06)' }}
+          cursor={{ fill: 'rgba(107, 62, 38, 0.06)' }}
           contentStyle={{
             borderRadius: 12,
             border: '1px solid #e2e8f0',
@@ -31,12 +31,12 @@ export function ProgressChart({ projects }: { projects: Project[] }) {
           }}
           formatter={(v: number) => [`${v}%`, 'Completion']}
         />
-        <Bar dataKey="completion" fill="#3478f6" radius={[8, 8, 0, 0]}>
+        <Bar dataKey="completion" fill="#6b3e26" radius={[8, 8, 0, 0]}>
           <LabelList
             dataKey="completion"
             position="top"
             formatter={(v: number) => `${v}%`}
-            style={{ fontSize: 11, fontWeight: 700, fill: '#1f5ce0' }}
+            style={{ fontSize: 11, fontWeight: 700, fill: '#553020' }}
           />
         </Bar>
       </BarChart>

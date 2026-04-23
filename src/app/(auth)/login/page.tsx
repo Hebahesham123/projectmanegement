@@ -9,7 +9,7 @@ import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import toast from 'react-hot-toast';
-import { Briefcase } from 'lucide-react';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const { t } = useI18n();
@@ -49,8 +49,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 flex items-center justify-center">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-600/30">
-              <Briefcase className="h-6 w-6" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white ring-1 ring-brand-200 shadow-lg shadow-brand-900/10">
+              <Image src="/logo.svg" alt="NS" width={36} height={36} className="h-9 w-9" />
             </div>
             <div>
               <div className="text-lg font-semibold">{t('app.name')}</div>
@@ -74,10 +74,6 @@ export default function LoginPage() {
               {t('auth.signin')}
             </Button>
           </form>
-          <div className="mt-6 rounded-xl bg-slate-50 p-3 text-center text-xs text-slate-600 dark:bg-slate-800/50 dark:text-slate-400">
-            <div className="font-medium text-slate-700 dark:text-slate-200">Demo credentials</div>
-            <div className="mt-1">admin@demo.local · Admin123!</div>
-          </div>
         </div>
       </div>
     </div>

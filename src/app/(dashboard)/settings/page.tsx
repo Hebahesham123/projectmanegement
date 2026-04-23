@@ -10,7 +10,7 @@ import { Input, Label } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import toast from 'react-hot-toast';
-import { Moon, Sun, Globe } from 'lucide-react';
+import { Moon, Sun, Globe, KeyRound } from 'lucide-react';
 
 export default function SettingsPage() {
   const { profile, refresh } = useAuth();
@@ -20,6 +20,10 @@ export default function SettingsPage() {
   const [fullName, setFullName] = useState(profile?.full_name ?? '');
   const [mobile, setMobile] = useState(profile?.mobile ?? '');
   const [saving, setSaving] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     setFullName(profile?.full_name ?? '');
@@ -35,6 +39,32 @@ export default function SettingsPage() {
     if (error) { toast.error(error.message); return; }
     toast.success('Profile updated');
     refresh();
+  };
+
+  const changePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile) return;
+    if (newPassword.length < 8) { toast.error(t('settings.password_too_short')); return; }
+    if (newPassword !== confirmPassword) { toast.error(t('settings.password_mismatch')); return; }
+
+    setChangingPassword(true);
+    const { error: reauthError } = await supabase.auth.signInWithPassword({
+      email: profile.email,
+      password: currentPassword,
+    });
+    if (reauthError) {
+      setChangingPassword(false);
+      toast.error(t('settings.current_password_wrong'));
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setChangingPassword(false);
+    if (error) { toast.error(error.message); return; }
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    toast.success(t('settings.password_updated'));
   };
 
   return (
@@ -62,6 +92,36 @@ export default function SettingsPage() {
             </div>
             <div className="flex justify-end">
               <Button type="submit" loading={saving}>{t('common.save')}</Button>
+            </div>
+          </form>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <span className="inline-flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-brand-600" />
+              {t('settings.change_password')}
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardBody>
+          <form onSubmit={changePassword} className="space-y-4">
+            <div>
+              <Label htmlFor="current_password">{t('auth.current_password')}</Label>
+              <Input id="current_password" type="password" autoComplete="current-password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required />
+            </div>
+            <div>
+              <Label htmlFor="new_password">{t('auth.new_password')}</Label>
+              <Input id="new_password" type="password" autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
+            </div>
+            <div>
+              <Label htmlFor="confirm_password">{t('auth.confirm_password')}</Label>
+              <Input id="confirm_password" type="password" autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" loading={changingPassword}>{t('settings.update_password')}</Button>
             </div>
           </form>
         </CardBody>

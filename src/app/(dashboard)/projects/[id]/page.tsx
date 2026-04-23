@@ -81,9 +81,10 @@ export default function ProjectDetailPage() {
                   <ProjectStatusBadge status={project.status} />
                 </div>
                 {project.description && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{project.description}</p>}
-                <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                   <Info label={t('project.sector')} value={project.sector ?? '—'} />
                   <Info label={t('project.owner')} value={project.owner_name ?? '—'} />
+                  <Info label={t('project.manager')} value={project.project_manager ?? '—'} />
                   <Info label={t('project.start_date')} value={formatDate(project.start_date)} />
                   <Info label={t('project.estimated_end_date')} value={formatDate(project.estimated_end_date)} />
                 </div>
