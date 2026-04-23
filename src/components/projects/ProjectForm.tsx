@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
@@ -8,6 +8,7 @@ import { Input, Textarea, Select, Label } from '@/components/ui/Input';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useData } from '@/lib/store/data';
+import { DEPARTMENTS } from '@/lib/constants';
 import toast from 'react-hot-toast';
 import type { Project, ProjectStatus } from '@/lib/types';
 
@@ -16,7 +17,14 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
   const { user } = useAuth();
   const supabase = createClient();
   const router = useRouter();
+  const { tasks } = useData();
   const [loading, setLoading] = useState(false);
+
+  const hasTasks = useMemo(
+    () => !!initial?.id && tasks.some(x => x.project_id === initial.id),
+    [initial?.id, tasks]
+  );
+
   const [form, setForm] = useState({
     name: initial?.name ?? '',
     description: initial?.description ?? '',
@@ -26,6 +34,7 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
     owner_mobile: initial?.owner_mobile ?? '',
     start_date: initial?.start_date ?? new Date().toISOString().slice(0, 10),
     estimated_end_date: initial?.estimated_end_date ?? '',
+    actual_end_date: initial?.actual_end_date ?? '',
     status: (initial?.status ?? 'not_started') as ProjectStatus,
   });
 
@@ -36,6 +45,7 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
       const payload = {
         ...form,
         estimated_end_date: form.estimated_end_date || null,
+        actual_end_date: form.actual_end_date || null,
         created_by: user?.id ?? null,
       };
       const res = initial?.id
@@ -43,7 +53,6 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
         : await supabase.from('projects').insert(payload).select().single();
       if (res.error) { toast.error(res.error.message); return; }
       const saved = res.data as Project;
-      // Optimistic store patch so UI reflects instantly (realtime will reconcile)
       useData.getState().applyProject({
         new: saved,
         old: initial?.id ? { id: initial.id } : null,
@@ -73,8 +82,15 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <Label htmlFor="sector">{t('project.sector')}</Label>
-          <Input id="sector" value={form.sector ?? ''} onChange={e => setForm({ ...form, sector: e.target.value })} />
+          <Label htmlFor="sector">Department</Label>
+          <Select id="sector" value={form.sector ?? ''} onChange={e => setForm({ ...form, sector: e.target.value })}>
+            <option value="">— Select department —</option>
+            {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+            {/* Preserve legacy value if it isn't in the new list */}
+            {form.sector && !DEPARTMENTS.includes(form.sector as (typeof DEPARTMENTS)[number]) && (
+              <option value={form.sector}>{form.sector} (legacy)</option>
+            )}
+          </Select>
         </div>
         <div>
           <Label htmlFor="status">{t('project.status')}</Label>
@@ -105,16 +121,38 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div>
-          <Label htmlFor="start_date">{t('project.start_date')}</Label>
+          <Label htmlFor="start_date">Start date</Label>
           <Input id="start_date" type="date" required value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} />
         </div>
         <div>
-          <Label htmlFor="estimated_end_date">{t('project.estimated_end_date')}</Label>
+          <Label htmlFor="estimated_end_date">Estimated end date</Label>
           <Input id="estimated_end_date" type="date" value={form.estimated_end_date ?? ''} onChange={e => setForm({ ...form, estimated_end_date: e.target.value })} />
         </div>
+        <div>
+          <Label htmlFor="actual_end_date">
+            Actual end date
+            {hasTasks && (
+              <span className="ms-2 text-[11px] font-normal text-slate-400">(auto-set from tasks)</span>
+            )}
+          </Label>
+          <Input
+            id="actual_end_date"
+            type="date"
+            value={form.actual_end_date ?? ''}
+            onChange={e => setForm({ ...form, actual_end_date: e.target.value })}
+            disabled={hasTasks}
+            title={hasTasks ? 'Auto-calculated once all tasks are done.' : 'Set this to manually close a project with no tasks.'}
+          />
+        </div>
       </div>
+
+      {!hasTasks && (
+        <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          This project has no tasks. To close it, set <strong>Status = Completed</strong> and pick an <strong>Actual end date</strong>.
+        </div>
+      )}
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={() => (onDone ? onDone() : router.back())}>

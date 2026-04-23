@@ -12,12 +12,29 @@ import { UpcomingDeadlines } from '@/components/dashboard/UpcomingDeadlines';
 import { TasksProgress } from '@/components/dashboard/TasksProgress';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { Card, CardHeader, CardTitle, CardBody } from '@/components/ui/Card';
+import { Select } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { DEPARTMENTS } from '@/lib/constants';
 
 export default function DashboardPage() {
   const { t } = useI18n();
-  const { projects, tasks, comments, hydrated } = useData();
+  const { projects: allProjects, tasks: allTasks, comments, hydrated } = useData();
   const [activeKpi, setActiveKpi] = useState<KpiKey | null>(null);
+  const [department, setDepartment] = useState<string | 'all'>('all');
+
+  const departmentOptions = useMemo(() => {
+    const set = new Set<string>(DEPARTMENTS);
+    for (const p of allProjects) if (p.sector) set.add(p.sector);
+    return Array.from(set).sort();
+  }, [allProjects]);
+
+  // Scope projects + tasks by the selected department
+  const { projects, tasks } = useMemo(() => {
+    if (department === 'all') return { projects: allProjects, tasks: allTasks };
+    const scoped = allProjects.filter(p => p.sector === department);
+    const ids = new Set(scoped.map(p => p.id));
+    return { projects: scoped, tasks: allTasks.filter(t => ids.has(t.project_id)) };
+  }, [allProjects, allTasks, department]);
 
   const { active, delayed, overallCompletion, overdueTasks } = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -49,9 +66,17 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('nav.dashboard')}</h1>
-        <p className="mt-1 text-sm text-slate-500">{t('app.tagline')}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{t('nav.dashboard')}</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {department === 'all' ? t('app.tagline') : <>Showing: <span className="font-medium">{department}</span></>}
+          </p>
+        </div>
+        <Select value={department} onChange={e => setDepartment(e.target.value)} className="sm:w-60">
+          <option value="all">All departments</option>
+          {departmentOptions.map(d => <option key={d} value={d}>{d}</option>)}
+        </Select>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">

@@ -14,6 +14,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Progress } from '@/components/ui/Progress';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate, cn } from '@/lib/utils';
+import { DEPARTMENTS } from '@/lib/constants';
 
 export default function TasksPage() {
   const { t } = useI18n();
@@ -21,6 +22,7 @@ export default function TasksPage() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<TaskStatus | 'all'>('all');
   const [projectId, setProjectId] = useState<string | 'all'>('all');
+  const [department, setDepartment] = useState<string | 'all'>('all');
 
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
   const today = new Date().toISOString().slice(0, 10);
@@ -29,6 +31,9 @@ export default function TasksPage() {
     let list = tasks;
     if (status !== 'all') list = list.filter(x => x.status === status);
     if (projectId !== 'all') list = list.filter(x => x.project_id === projectId);
+    if (department !== 'all') {
+      list = list.filter(x => projectMap.get(x.project_id)?.sector === department);
+    }
     if (q) {
       const needle = q.toLowerCase();
       list = list.filter(
@@ -38,7 +43,13 @@ export default function TasksPage() {
       );
     }
     return list;
-  }, [tasks, q, status, projectId]);
+  }, [tasks, q, status, projectId, department, projectMap]);
+
+  const departmentOptions = useMemo(() => {
+    const set = new Set<string>(DEPARTMENTS);
+    for (const p of projects) if (p.sector) set.add(p.sector);
+    return Array.from(set).sort();
+  }, [projects]);
 
   const doExport = async () => {
     const { exportCsv } = await import('@/lib/export');
@@ -92,14 +103,18 @@ export default function TasksPage() {
           />
         </div>
         <Select value={status} onChange={e => setStatus(e.target.value as TaskStatus | 'all')} className="sm:w-44">
-          <option value="all">{t('common.all')}</option>
+          <option value="all">{t('common.all')} — {t('task.status')}</option>
           <option value="todo">{t('task_status.todo')}</option>
           <option value="in_progress">{t('task_status.in_progress')}</option>
           <option value="done">{t('task_status.done')}</option>
           <option value="blocked">{t('task_status.blocked')}</option>
         </Select>
+        <Select value={department} onChange={e => setDepartment(e.target.value)} className="sm:w-52">
+          <option value="all">{t('common.all')} — Department</option>
+          {departmentOptions.map(d => <option key={d} value={d}>{d}</option>)}
+        </Select>
         <Select value={projectId} onChange={e => setProjectId(e.target.value)} className="sm:w-52">
-          <option value="all">{t('common.all')}</option>
+          <option value="all">{t('common.all')} — Project</option>
           {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </Select>
       </div>
