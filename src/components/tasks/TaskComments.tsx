@@ -10,6 +10,7 @@ import { formatDate } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { useData } from '@/lib/store/data';
+import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import { Trash2 } from 'lucide-react';
 
@@ -17,7 +18,7 @@ export function TaskComments({ taskId }: { taskId: string }) {
   const { user, profile } = useAuth();
   const { t } = useI18n();
   const supabase = createClient();
-  const { comments: allComments, users } = useData();
+  const { comments: allComments, users, tasks } = useData();
   const [body, setBody] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,6 +43,41 @@ export function TaskComments({ taskId }: { taskId: string }) {
       }).select().single();
       if (res.error) { toast.error(res.error.message); return; }
       useData.getState().applyComment({ new: res.data as Comment, old: null, eventType: 'INSERT' });
+
+      const task = tasks.find(x => x.id === taskId);
+      if (task?.assignee_id && task.assignee_id !== user.id) {
+        const href = `/projects/${task.project_id}`;
+        const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+        const authorName = profile?.full_name || profile?.email || 'Someone';
+        const mail = buildEmail({
+          accent: 'brand',
+          eyebrow: 'New comment',
+          preheader: `${authorName} commented on "${task.title}"`,
+          heading: `New comment on: ${task.title}`,
+          recipientName: task.assignee_name ?? undefined,
+          intro: `${authorName} left a new comment on a task assigned to you.`,
+          facts: [
+            { label: 'Task', value: task.title },
+            { label: 'Commented by', value: authorName },
+          ],
+          message: body.trim(),
+          cta: { label: 'View task', href: `${origin}${href}` },
+        });
+        notify({
+          userId: task.assignee_id,
+          kind: 'new_comment',
+          title: `New comment on: ${task.title}`,
+          body: body.trim().slice(0, 140),
+          link: href,
+          email: task.assignee_email ? {
+            to: task.assignee_email,
+            subject: `[NS Project Tracker] New comment on "${task.title}"`,
+            html: mail.html,
+            text: mail.text,
+          } : undefined,
+        });
+      }
+
       setBody('');
       setReplyTo(null);
     } catch (err: unknown) {

@@ -7,9 +7,17 @@ import { Input, Textarea, Select, Label } from '@/components/ui/Input';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useData } from '@/lib/store/data';
+import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import { UserX } from 'lucide-react';
 import type { Task, TaskStatus } from '@/lib/types';
+
+function humanStatus(s: string) {
+  return s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function formatYmd(d: string) {
+  try { return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return d; }
+}
 
 export function TaskForm({ projectId, initial, onDone }: { projectId: string; initial?: Partial<Task>; onDone?: () => void }) {
   const { t } = useI18n();
@@ -55,6 +63,71 @@ export function TaskForm({ projectId, initial, onDone }: { projectId: string; in
         old: initial?.id ? { id: initial.id } : null,
         eventType: initial?.id ? 'UPDATE' : 'INSERT',
       });
+
+      const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+      const href = `/projects/${saved.project_id}`;
+      const projectName = useData.getState().projects.find(p => p.id === saved.project_id)?.name ?? '';
+
+      // 1) Task assigned
+      const assigneeChanged = !!saved.assignee_id && saved.assignee_id !== (initial?.assignee_id ?? null);
+      if (assigneeChanged && saved.assignee_email) {
+        const mail = buildEmail({
+          accent: 'brand',
+          eyebrow: 'New assignment',
+          preheader: `You've been assigned "${saved.title}"`,
+          heading: `You have a new task: ${saved.title}`,
+          recipientName: saved.assignee_name ?? undefined,
+          intro: `A task has been assigned to you on NS Project Tracker. Here are the details:`,
+          facts: [
+            { label: 'Task', value: saved.title },
+            { label: 'Project', value: projectName || '—' },
+            { label: 'Status', value: humanStatus(saved.status) },
+            { label: 'Due date', value: saved.due_date ? formatYmd(saved.due_date) : 'Not set' },
+          ],
+          message: saved.description || undefined,
+          cta: { label: 'Open task', href: `${origin}${href}` },
+        });
+        notify({
+          userId: saved.assignee_id!,
+          kind: 'task_assigned',
+          title: `You were assigned: ${saved.title}`,
+          body: saved.due_date ? `Due ${saved.due_date}` : undefined,
+          link: href,
+          email: { to: saved.assignee_email, subject: `[NS Project Tracker] New task: ${saved.title}`, html: mail.html, text: mail.text },
+        });
+      }
+
+      // 2) Task status changed to blocked/delayed
+      const becameDelayed = saved.status === 'blocked' && initial?.status !== 'blocked';
+      const dueMissed = saved.due_date && saved.due_date < new Date().toISOString().slice(0, 10) && saved.status !== 'done';
+      if ((becameDelayed || dueMissed) && saved.assignee_id && saved.assignee_email) {
+        const mail = buildEmail({
+          accent: 'rose',
+          eyebrow: becameDelayed ? 'Task blocked' : 'Task overdue',
+          preheader: `"${saved.title}" needs attention`,
+          heading: becameDelayed ? `A task was marked blocked: ${saved.title}` : `Task overdue: ${saved.title}`,
+          recipientName: saved.assignee_name ?? undefined,
+          intro: becameDelayed
+            ? 'This task is currently blocked and requires your attention to unblock.'
+            : 'This task has passed its due date without being completed. Please review and take action.',
+          facts: [
+            { label: 'Task', value: saved.title },
+            { label: 'Project', value: projectName || '—' },
+            { label: 'Status', value: humanStatus(saved.status) },
+            { label: 'Due date', value: saved.due_date ? formatYmd(saved.due_date) : '—' },
+          ],
+          cta: { label: 'Review task', href: `${origin}${href}` },
+        });
+        notify({
+          userId: saved.assignee_id,
+          kind: 'overdue',
+          title: becameDelayed ? `Blocked: ${saved.title}` : `Overdue: ${saved.title}`,
+          body: saved.due_date ? `Due ${saved.due_date}` : undefined,
+          link: href,
+          email: { to: saved.assignee_email, subject: `[NS Project Tracker] ${becameDelayed ? 'Blocked' : 'Overdue'}: ${saved.title}`, html: mail.html, text: mail.text },
+        });
+      }
+
       toast.success(initial?.id ? 'Task updated' : 'Task created');
       onDone?.();
     } catch (err: unknown) {

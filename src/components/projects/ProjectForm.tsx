@@ -9,8 +9,17 @@ import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useData } from '@/lib/store/data';
 import { DEPARTMENTS, PROJECT_MANAGERS } from '@/lib/constants';
+import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import type { Project, ProjectStatus } from '@/lib/types';
+
+function humanStatus(s: string) {
+  return s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function formatYmd(d: string | null | undefined) {
+  if (!d) return 'Not set';
+  try { return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return d; }
+}
 
 export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; onDone?: () => void }) {
   const { t } = useI18n();
@@ -154,6 +163,88 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
         old: initial?.id ? { id: initial.id } : null,
         eventType: initial?.id ? 'UPDATE' : 'INSERT',
       });
+
+      const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+      const href = `/projects/${saved.id}`;
+
+      // 1) Project assigned — owner changed or project is brand-new
+      const ownerChanged = !!saved.owner_email && saved.owner_email !== (initial?.owner_email ?? null);
+      if (ownerChanged) {
+        const ownerUser = users.find(u => u.email === saved.owner_email);
+        const mail = buildEmail({
+          accent: 'brand',
+          eyebrow: initial?.id ? 'Project reassigned' : 'New project',
+          preheader: `You are the owner of "${saved.name}"`,
+          heading: `You've been assigned as owner: ${saved.name}`,
+          recipientName: saved.owner_name ?? undefined,
+          intro: `A project has been assigned to you on NS Project Tracker. Review the details and get started.`,
+          facts: [
+            { label: 'Project', value: saved.name },
+            { label: 'Department', value: saved.sector ?? '—' },
+            { label: 'Project manager', value: saved.project_manager ?? '—' },
+            { label: 'Start date', value: formatYmd(saved.start_date) },
+            { label: 'Estimated end', value: formatYmd(saved.estimated_end_date) },
+            { label: 'Status', value: humanStatus(saved.status) },
+          ],
+          message: saved.description || undefined,
+          cta: { label: 'Open project', href: `${origin}${href}` },
+        });
+        if (ownerUser) {
+          notify({
+            userId: ownerUser.id,
+            kind: 'project_update',
+            title: `You were assigned project: ${saved.name}`,
+            body: saved.estimated_end_date ? `Est. end ${formatYmd(saved.estimated_end_date)}` : undefined,
+            link: href,
+            email: { to: saved.owner_email!, subject: `[NS Project Tracker] You were assigned project: ${saved.name}`, html: mail.html, text: mail.text },
+          });
+        } else {
+          // owner is not a system user — still send email, skip in-app row
+          fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to: saved.owner_email!, subject: `[NS Project Tracker] You were assigned project: ${saved.name}`, html: mail.html, text: mail.text }),
+          }).catch(() => {});
+        }
+      }
+
+      // 2) Project became delayed
+      const becameDelayed = saved.status === 'delayed' && initial?.status !== 'delayed';
+      if (becameDelayed && saved.owner_email) {
+        const ownerUser = users.find(u => u.email === saved.owner_email);
+        const mail = buildEmail({
+          accent: 'rose',
+          eyebrow: 'Project delayed',
+          preheader: `"${saved.name}" has been marked delayed`,
+          heading: `Project marked as delayed: ${saved.name}`,
+          recipientName: saved.owner_name ?? undefined,
+          intro: `This project is now marked as delayed. Please review timelines and take corrective action.`,
+          facts: [
+            { label: 'Project', value: saved.name },
+            { label: 'Status', value: 'Delayed' },
+            { label: 'Estimated end', value: formatYmd(saved.estimated_end_date) },
+            { label: 'Completion', value: `${Math.round(Number(saved.completion_rate))}%` },
+          ],
+          cta: { label: 'Review project', href: `${origin}${href}` },
+        });
+        if (ownerUser) {
+          notify({
+            userId: ownerUser.id,
+            kind: 'project_update',
+            title: `Project delayed: ${saved.name}`,
+            body: `${Math.round(Number(saved.completion_rate))}% complete`,
+            link: href,
+            email: { to: saved.owner_email, subject: `[NS Project Tracker] Project delayed: ${saved.name}`, html: mail.html, text: mail.text },
+          });
+        } else {
+          fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to: saved.owner_email, subject: `[NS Project Tracker] Project delayed: ${saved.name}`, html: mail.html, text: mail.text }),
+          }).catch(() => {});
+        }
+      }
+
       toast.success(initial?.id ? 'Project updated' : 'Project created');
       if (onDone) onDone();
       else router.push(`/projects/${saved.id}`);

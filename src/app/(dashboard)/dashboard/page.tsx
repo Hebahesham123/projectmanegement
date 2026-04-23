@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FolderKanban, Zap, AlertTriangle, TrendingUp, ListChecks, Clock } from 'lucide-react';
 import { useData } from '@/lib/store/data';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
@@ -17,10 +17,25 @@ import { Card, CardHeader, CardTitle, CardBody } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { DEPARTMENTS, PROJECT_MANAGERS } from '@/lib/constants';
+import { useAuth } from '@/lib/auth/AuthProvider';
+import { runDeadlineScan } from '@/lib/notifications/deadlineScan';
 
 export default function DashboardPage() {
   const { t } = useI18n();
-  const { projects: allProjects, tasks: allTasks, comments, hydrated } = useData();
+  const { user } = useAuth();
+  const { projects: allProjects, tasks: allTasks, comments, users, notifications, hydrated } = useData();
+
+  useEffect(() => {
+    if (!hydrated) return;
+    runDeadlineScan({
+      tasks: allTasks,
+      projects: allProjects,
+      users,
+      notifications,
+      currentUserId: user?.id,
+    }).catch(err => console.warn('[deadlineScan]', err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
   const [activeKpi, setActiveKpi] = useState<KpiKey | null>(null);
   const [department, setDepartment] = useState<string | 'all'>('all');
   const [manager, setManager] = useState<string | 'all'>('all');
