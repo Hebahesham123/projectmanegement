@@ -34,6 +34,8 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
+    const next = path + (request.nextUrl.search || '');
+    if (next && next !== '/') url.searchParams.set('next', next);
     return NextResponse.redirect(url);
   }
   if (user && isAuthRoute) {

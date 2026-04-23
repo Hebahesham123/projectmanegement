@@ -11,14 +11,18 @@ import {
   Bell,
   Users,
   Settings,
+  Mail,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
+import { useAuth } from '@/lib/auth/AuthProvider';
 
 export function Sidebar({ onClose, onNavigate }: { onClose?: () => void; onNavigate?: () => void }) {
   const pathname = usePathname();
   const { t } = useI18n();
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
 
   const nav = [
     { href: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
@@ -27,6 +31,7 @@ export function Sidebar({ onClose, onNavigate }: { onClose?: () => void; onNavig
     { href: '/calendar', label: t('nav.calendar'), icon: CalendarDays },
     { href: '/notifications', label: t('nav.notifications'), icon: Bell },
     { href: '/team', label: t('nav.team'), icon: Users },
+    ...(isAdmin ? [{ href: '/settings/emails', label: 'Email log', icon: Mail }] : []),
     { href: '/settings', label: t('nav.settings'), icon: Settings },
   ];
 
@@ -52,7 +57,14 @@ export function Sidebar({ onClose, onNavigate }: { onClose?: () => void; onNavig
       </div>
       <nav className="flex-1 space-y-1 px-3 py-2">
         {nav.map(item => {
-          const active = pathname === item.href || pathname.startsWith(item.href + '/');
+          const matches = pathname === item.href || pathname.startsWith(item.href + '/');
+          const longerMatch = nav.some(
+            other =>
+              other.href !== item.href &&
+              other.href.startsWith(item.href + '/') &&
+              (pathname === other.href || pathname.startsWith(other.href + '/')),
+          );
+          const active = matches && !longerMatch;
           const Icon = item.icon;
           return (
             <Link

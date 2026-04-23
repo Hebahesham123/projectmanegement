@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input, Label } from '@/components/ui/Input';
@@ -14,6 +14,7 @@ import Image from 'next/image';
 export default function LoginPage() {
   const { t } = useI18n();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +30,9 @@ export default function LoginPage() {
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) { toast.error(error.message); return; }
-      router.push('/dashboard');
+      const next = searchParams.get('next');
+      const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+      router.push(safeNext);
       router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Sign-in failed — check Network tab.';

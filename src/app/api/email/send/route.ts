@@ -65,6 +65,28 @@ export async function POST(req: Request) {
     return /greeting never received|socket close|timeout|ETIMEDOUT|ECONNRESET|ECONNREFUSED/i.test(m);
   };
 
+  const logAttempt = async (row: {
+    status: 'sent' | 'failed';
+    message_id?: string | null;
+    response?: string | null;
+    accepted?: string[] | null;
+    rejected?: string[] | null;
+    error?: string | null;
+  }) => {
+    try {
+      await supabase.from('email_log').insert({
+        sent_by: user.id,
+        to_addr: mail.to,
+        subject: mail.subject,
+        html: mail.html ?? null,
+        text: mail.text ?? null,
+        ...row,
+      });
+    } catch (e) {
+      console.warn('[email/send] log insert failed:', e instanceof Error ? e.message : e);
+    }
+  };
+
   try {
     let info;
     try {
@@ -76,6 +98,13 @@ export async function POST(req: Request) {
       info = await send();
     }
     console.log('[email/send] accepted:', info.accepted, 'rejected:', info.rejected, 'response:', info.response);
+    await logAttempt({
+      status: 'sent',
+      message_id: info.messageId ?? null,
+      response: info.response ?? null,
+      accepted: (info.accepted as string[]) ?? null,
+      rejected: (info.rejected as string[]) ?? null,
+    });
     return NextResponse.json({
       ok: true,
       id: info.messageId,
@@ -86,6 +115,7 @@ export async function POST(req: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'send failed';
     console.error('[email/send]', msg);
+    await logAttempt({ status: 'failed', error: msg });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
