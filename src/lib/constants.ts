@@ -11,3 +11,19 @@ export const DEPARTMENTS = [
 ] as const;
 
 export type Department = (typeof DEPARTMENTS)[number];
+
+// Allowed Project Managers
+export const PROJECT_MANAGERS = [
+  'Rehab Ibrahim',
+  'Farah Ashraf',
+  'Anjie Magdy',
+] as const;
+
+// Allowed Project Owners (the 4 admins)
+export const PROJECT_OWNERS = [
+  'Karim Elbahey',
+  'Rehab Ibrahim',
+  'Farah Ashraf',
+  'Anjie Magdy',
+] as const;
+

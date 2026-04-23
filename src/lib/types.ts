@@ -20,9 +20,11 @@ export interface Project {
   owner_name: string | null;
   owner_email: string | null;
   owner_mobile: string | null;
+  project_manager: string | null;
   start_date: string;
   estimated_end_date: string | null;
   actual_end_date: string | null;
+  end_date_mode: 'auto' | 'manual';
   status: ProjectStatus;
   completion_rate: number;
   created_by: string | null;

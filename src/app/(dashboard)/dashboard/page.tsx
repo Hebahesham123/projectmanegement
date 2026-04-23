@@ -14,13 +14,14 @@ import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { Card, CardHeader, CardTitle, CardBody } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { DEPARTMENTS } from '@/lib/constants';
+import { DEPARTMENTS, PROJECT_MANAGERS } from '@/lib/constants';
 
 export default function DashboardPage() {
   const { t } = useI18n();
   const { projects: allProjects, tasks: allTasks, comments, hydrated } = useData();
   const [activeKpi, setActiveKpi] = useState<KpiKey | null>(null);
   const [department, setDepartment] = useState<string | 'all'>('all');
+  const [manager, setManager] = useState<string | 'all'>('all');
 
   const departmentOptions = useMemo(() => {
     const set = new Set<string>(DEPARTMENTS);
@@ -28,13 +29,26 @@ export default function DashboardPage() {
     return Array.from(set).sort();
   }, [allProjects]);
 
-  // Scope projects + tasks by the selected department
+  const managerOptions = useMemo(() => {
+    const set = new Set<string>(PROJECT_MANAGERS);
+    for (const p of allProjects) if (p.project_manager) set.add(p.project_manager);
+    return Array.from(set).sort();
+  }, [allProjects]);
+
+  // Scope projects + tasks by the selected department and/or manager
   const { projects, tasks } = useMemo(() => {
-    if (department === 'all') return { projects: allProjects, tasks: allTasks };
-    const scoped = allProjects.filter(p => p.sector === department);
+    let scoped = allProjects;
+    if (department !== 'all') scoped = scoped.filter(p => p.sector === department);
+    if (manager !== 'all') scoped = scoped.filter(p => p.project_manager === manager);
+    if (scoped === allProjects) return { projects: allProjects, tasks: allTasks };
     const ids = new Set(scoped.map(p => p.id));
     return { projects: scoped, tasks: allTasks.filter(t => ids.has(t.project_id)) };
-  }, [allProjects, allTasks, department]);
+  }, [allProjects, allTasks, department, manager]);
+
+  const scopeLabel = [
+    department !== 'all' ? department : null,
+    manager !== 'all' ? manager : null,
+  ].filter(Boolean).join(' · ');
 
   const { active, delayed, overallCompletion, overdueTasks } = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -70,13 +84,19 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('nav.dashboard')}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {department === 'all' ? t('app.tagline') : <>Showing: <span className="font-medium">{department}</span></>}
+            {scopeLabel ? <>Showing: <span className="font-medium">{scopeLabel}</span></> : t('app.tagline')}
           </p>
         </div>
-        <Select value={department} onChange={e => setDepartment(e.target.value)} className="sm:w-60">
-          <option value="all">All departments</option>
-          {departmentOptions.map(d => <option key={d} value={d}>{d}</option>)}
-        </Select>
+        <div className="flex flex-wrap gap-2">
+          <Select value={department} onChange={e => setDepartment(e.target.value)} className="sm:w-56">
+            <option value="all">All departments</option>
+            {departmentOptions.map(d => <option key={d} value={d}>{d}</option>)}
+          </Select>
+          <Select value={manager} onChange={e => setManager(e.target.value)} className="sm:w-56">
+            <option value="all">All managers</option>
+            {managerOptions.map(m => <option key={m} value={m}>{m}</option>)}
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">

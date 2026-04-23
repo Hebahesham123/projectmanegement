@@ -17,7 +17,7 @@ import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
 import { Progress } from '@/components/ui/Progress';
 import { formatDate, projectHealth, healthClasses, cn, daysBetween } from '@/lib/utils';
-import { DEPARTMENTS } from '@/lib/constants';
+import { DEPARTMENTS, PROJECT_MANAGERS } from '@/lib/constants';
 
 export default function ProjectsPage() {
   const { t } = useI18n();
@@ -27,6 +27,7 @@ export default function ProjectsPage() {
   const [status, setStatus] = useState<ProjectStatus | 'all'>('all');
   const [memberId, setMemberId] = useState<string | 'all'>('all');
   const [department, setDepartment] = useState<string | 'all'>('all');
+  const [manager, setManager] = useState<string | 'all'>('all');
   const [sort, setSort] = useState<'recent' | 'name' | 'completion' | 'deadline'>('recent');
   const [view, setView] = useState<'list' | 'grid'>('list');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -77,6 +78,7 @@ export default function ProjectsPage() {
     let list = projects;
     if (status !== 'all') list = list.filter(p => p.status === status);
     if (department !== 'all') list = list.filter(p => p.sector === department);
+    if (manager !== 'all') list = list.filter(p => p.project_manager === manager);
     if (memberId !== 'all') list = list.filter(p => membersByProject.get(p.id)?.has(memberId));
     if (q) {
       const needle = q.toLowerCase();
@@ -93,12 +95,18 @@ export default function ProjectsPage() {
     else if (sort === 'deadline') sorted.sort((a, b) => (a.estimated_end_date ?? '9') > (b.estimated_end_date ?? '9') ? 1 : -1);
     else sorted.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
     return sorted;
-  }, [projects, q, status, memberId, department, sort, membersByProject]);
+  }, [projects, q, status, memberId, department, manager, sort, membersByProject]);
 
   // Department options: predefined list + any legacy values currently in data
   const departmentOptions = useMemo(() => {
     const set = new Set<string>(DEPARTMENTS);
     for (const p of projects) if (p.sector) set.add(p.sector);
+    return Array.from(set).sort();
+  }, [projects]);
+
+  const managerOptions = useMemo(() => {
+    const set = new Set<string>(PROJECT_MANAGERS);
+    for (const p of projects) if (p.project_manager) set.add(p.project_manager);
     return Array.from(set).sort();
   }, [projects]);
 
@@ -181,6 +189,10 @@ export default function ProjectsPage() {
           <option value="all">{t('common.all')} — Department</option>
           {departmentOptions.map(d => <option key={d} value={d}>{d}</option>)}
         </Select>
+        <Select value={manager} onChange={e => setManager(e.target.value)} className="sm:w-52">
+          <option value="all">{t('common.all')} — Manager</option>
+          {managerOptions.map(m => <option key={m} value={m}>{m}</option>)}
+        </Select>
         <Select value={memberId} onChange={e => setMemberId(e.target.value)} className="sm:w-56">
           <option value="all">{t('common.all')} — {t('task.assignee')}</option>
           {memberOptions.map(u => (
@@ -218,6 +230,7 @@ export default function ProjectsPage() {
                   <th className="px-5 py-3 text-start">Department</th>
                   <th className="px-5 py-3 text-start">{t('project.status')}</th>
                   <th className="px-5 py-3 text-start">{t('project.owner')}</th>
+                  <th className="px-5 py-3 text-start">Manager</th>
                   <th className="px-5 py-3 text-start">Start</th>
                   <th className="px-5 py-3 text-start">Estimated</th>
                   <th className="px-5 py-3 text-start">Actual End</th>
@@ -266,6 +279,9 @@ export default function ProjectsPage() {
                             </div>
                           ) : <span className="text-slate-400">—</span>}
                         </td>
+                        <td className="px-5 py-3 text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                          {p.project_manager ?? <span className="text-slate-400">—</span>}
+                        </td>
                         <td className="px-5 py-3 text-slate-700 dark:text-slate-200 whitespace-nowrap">{formatDate(p.start_date)}</td>
                         <td className="px-5 py-3 text-slate-700 dark:text-slate-200 whitespace-nowrap">{formatDate(p.estimated_end_date)}</td>
                         <td className="px-5 py-3 whitespace-nowrap">
@@ -292,7 +308,7 @@ export default function ProjectsPage() {
                       {isOpen && (
                         <tr className="bg-slate-50/70 dark:bg-slate-900/50">
                           <td></td>
-                          <td colSpan={9} className="px-5 pb-4 pt-0">
+                          <td colSpan={10} className="px-5 pb-4 pt-0">
                             {projTasks.length === 0 ? (
                               <div className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-500 dark:border-slate-700">
                                 {t('task.none')}
