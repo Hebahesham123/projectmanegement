@@ -17,7 +17,8 @@ import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
 import { Progress } from '@/components/ui/Progress';
 import { formatDate, projectHealth, healthClasses, cn, daysBetween } from '@/lib/utils';
-import { DEPARTMENTS, PROJECT_MANAGERS } from '@/lib/constants';
+import { DEPARTMENTS, DEPARTMENTS_TOP, DEPARTMENT_GROUPS, PROJECT_MANAGERS } from '@/lib/constants';
+import { HierarchySelect } from '@/components/ui/HierarchySelect';
 
 export default function ProjectsPage() {
   const { t } = useI18n();
@@ -102,12 +103,13 @@ export default function ProjectsPage() {
 
   // Department options: predefined list + any legacy values currently in data
   const departmentOptions = useMemo(() => {
-    const set = new Set<string>(DEPARTMENTS);
+    const known = new Set<string>(DEPARTMENTS);
+    const extras = new Set<string>();
     for (const p of projects) {
-      for (const d of p.departments ?? []) set.add(d);
-      if (p.sector && !(p.departments ?? []).length) set.add(p.sector);
+      for (const d of p.departments ?? []) if (!known.has(d)) extras.add(d);
+      if (p.sector && !(p.departments ?? []).length && !known.has(p.sector)) extras.add(p.sector);
     }
-    return Array.from(set).sort();
+    return [...DEPARTMENTS_TOP, ...Array.from(extras).sort()];
   }, [projects]);
 
   const managerOptions = useMemo(() => {
@@ -191,10 +193,14 @@ export default function ProjectsPage() {
           <option value="completed">{t('status.completed')}</option>
           <option value="delayed">{t('status.delayed')}</option>
         </Select>
-        <Select value={department} onChange={e => setDepartment(e.target.value)} className="sm:w-52">
-          <option value="all">{t('common.all')} — Department</option>
-          {departmentOptions.map(d => <option key={d} value={d}>{d}</option>)}
-        </Select>
+        <HierarchySelect
+          value={department}
+          onChange={v => setDepartment(v as string | 'all')}
+          options={departmentOptions}
+          groups={DEPARTMENT_GROUPS}
+          allLabel={`${t('common.all')} — Department`}
+          className="sm:w-52"
+        />
         <Select value={manager} onChange={e => setManager(e.target.value)} className="sm:w-52">
           <option value="all">{t('common.all')} — Manager</option>
           {managerOptions.map(m => <option key={m} value={m}>{m}</option>)}
