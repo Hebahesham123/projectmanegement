@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Select, Label } from '@/components/ui/Input';
+import { MultiSelect } from '@/components/ui/MultiSelect';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useData } from '@/lib/store/data';
@@ -56,6 +57,9 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
     name: initial?.name ?? '',
     description: initial?.description ?? '',
     sector: initial?.sector ?? '',
+    departments: (initial?.departments && initial.departments.length > 0)
+      ? initial.departments
+      : (initial?.sector ? [initial.sector] : []),
     owner_name: initial?.owner_name ?? '',
     owner_email: initial?.owner_email ?? '',
     owner_mobile: initial?.owner_mobile ?? '',
@@ -144,6 +148,7 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
     try {
       const payload = {
         ...form,
+        sector: form.departments[0] ?? null,
         estimated_end_date: form.estimated_end_date || null,
         actual_end_date: form.actual_end_date || null,
         // If admin entered an end date → manual (trigger won't touch it)
@@ -180,7 +185,7 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
           intro: `A project has been assigned to you on NS Project Tracker. Review the details and get started.`,
           facts: [
             { label: 'Project', value: saved.name },
-            { label: 'Department', value: saved.sector ?? '—' },
+            { label: 'Department', value: (saved.departments && saved.departments.length > 0) ? saved.departments.join(', ') : (saved.sector ?? '—') },
             { label: 'Project manager', value: saved.project_manager ?? '—' },
             { label: 'Start date', value: formatYmd(saved.start_date) },
             { label: 'Estimated end', value: formatYmd(saved.estimated_end_date) },
@@ -297,14 +302,13 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div>
-          <Label htmlFor="sector">Department</Label>
-          <Select id="sector" value={form.sector ?? ''} onChange={e => setForm({ ...form, sector: e.target.value })}>
-            <option value="">— Select —</option>
-            {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-            {form.sector && !DEPARTMENTS.includes(form.sector as (typeof DEPARTMENTS)[number]) && (
-              <option value={form.sector}>{form.sector} (legacy)</option>
-            )}
-          </Select>
+          <Label>Departments</Label>
+          <MultiSelect
+            options={DEPARTMENTS}
+            value={form.departments}
+            onChange={next => setForm({ ...form, departments: next })}
+            placeholder="— Select one or more —"
+          />
         </div>
         <div>
           <Label htmlFor="owner_name">Project Owner</Label>

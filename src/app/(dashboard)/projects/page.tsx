@@ -77,7 +77,9 @@ export default function ProjectsPage() {
   const filtered = useMemo(() => {
     let list = projects;
     if (status !== 'all') list = list.filter(p => p.status === status);
-    if (department !== 'all') list = list.filter(p => p.sector === department);
+    if (department !== 'all') list = list.filter(p =>
+      (p.departments ?? []).includes(department) || p.sector === department
+    );
     if (manager !== 'all') list = list.filter(p => p.project_manager === manager);
     if (memberId !== 'all') list = list.filter(p => membersByProject.get(p.id)?.has(memberId));
     if (q) {
@@ -86,6 +88,7 @@ export default function ProjectsPage() {
         p => p.name.toLowerCase().includes(needle) ||
              p.description?.toLowerCase().includes(needle) ||
              p.sector?.toLowerCase().includes(needle) ||
+             (p.departments ?? []).some(d => d.toLowerCase().includes(needle)) ||
              p.owner_name?.toLowerCase().includes(needle)
       );
     }
@@ -100,7 +103,10 @@ export default function ProjectsPage() {
   // Department options: predefined list + any legacy values currently in data
   const departmentOptions = useMemo(() => {
     const set = new Set<string>(DEPARTMENTS);
-    for (const p of projects) if (p.sector) set.add(p.sector);
+    for (const p of projects) {
+      for (const d of p.departments ?? []) set.add(d);
+      if (p.sector && !(p.departments ?? []).length) set.add(p.sector);
+    }
     return Array.from(set).sort();
   }, [projects]);
 

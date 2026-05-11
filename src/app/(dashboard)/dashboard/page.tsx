@@ -42,7 +42,10 @@ export default function DashboardPage() {
 
   const departmentOptions = useMemo(() => {
     const set = new Set<string>(DEPARTMENTS);
-    for (const p of allProjects) if (p.sector) set.add(p.sector);
+    for (const p of allProjects) {
+      for (const d of p.departments ?? []) set.add(d);
+      if (p.sector && !(p.departments ?? []).length) set.add(p.sector);
+    }
     return Array.from(set).sort();
   }, [allProjects]);
 
@@ -55,7 +58,9 @@ export default function DashboardPage() {
   // Scope projects + tasks by the selected department and/or manager
   const { projects, tasks } = useMemo(() => {
     let scoped = allProjects;
-    if (department !== 'all') scoped = scoped.filter(p => p.sector === department);
+    if (department !== 'all') scoped = scoped.filter(p =>
+      (p.departments ?? []).includes(department) || p.sector === department
+    );
     if (manager !== 'all') scoped = scoped.filter(p => p.project_manager === manager);
     if (scoped === allProjects) return { projects: allProjects, tasks: allTasks };
     const ids = new Set(scoped.map(p => p.id));

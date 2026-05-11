@@ -33,8 +33,14 @@ export function ProjectCard({ project }: { project: Project }) {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
-          {project.sector && (
-            <span className="inline-flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" />{project.sector}</span>
+          {((project.departments && project.departments.length > 0) || project.sector) && (
+            <span className="inline-flex items-center gap-1.5">
+              <Building2 className="h-3.5 w-3.5" />
+              {(project.departments && project.departments.length > 0
+                ? project.departments
+                : [project.sector!]
+              ).join(', ')}
+            </span>
           )}
           {project.owner_name && (
             <span className="inline-flex items-center gap-1.5"><User className="h-3.5 w-3.5" />{project.owner_name}</span>

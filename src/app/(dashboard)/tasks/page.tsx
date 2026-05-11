@@ -32,7 +32,12 @@ export default function TasksPage() {
     if (status !== 'all') list = list.filter(x => x.status === status);
     if (projectId !== 'all') list = list.filter(x => x.project_id === projectId);
     if (department !== 'all') {
-      list = list.filter(x => projectMap.get(x.project_id)?.sector === department);
+      list = list.filter(x => {
+        const p = projectMap.get(x.project_id);
+        const projectMatches = !!p && ((p.departments ?? []).includes(department) || p.sector === department);
+        const taskMatches = (x.departments ?? []).includes(department);
+        return projectMatches || taskMatches;
+      });
     }
     if (q) {
       const needle = q.toLowerCase();
@@ -47,7 +52,10 @@ export default function TasksPage() {
 
   const departmentOptions = useMemo(() => {
     const set = new Set<string>(DEPARTMENTS);
-    for (const p of projects) if (p.sector) set.add(p.sector);
+    for (const p of projects) {
+      for (const d of p.departments ?? []) set.add(d);
+      if (p.sector && !(p.departments ?? []).length) set.add(p.sector);
+    }
     return Array.from(set).sort();
   }, [projects]);
 

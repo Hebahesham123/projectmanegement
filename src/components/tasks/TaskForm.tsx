@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Select, Label } from '@/components/ui/Input';
+import { MultiSelect } from '@/components/ui/MultiSelect';
+import { DEPARTMENTS } from '@/lib/constants';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useData } from '@/lib/store/data';
@@ -36,6 +38,7 @@ export function TaskForm({ projectId, initial, onDone }: { projectId: string; in
     completion_percentage: initial?.completion_percentage ?? 0,
     start_date: initial?.start_date ?? '',
     due_date: initial?.due_date ?? '',
+    departments: initial?.departments ?? [],
   });
 
   async function save(e: React.FormEvent) {
@@ -171,6 +174,16 @@ export function TaskForm({ projectId, initial, onDone }: { projectId: string; in
       <div>
         <Label htmlFor="description">{t('task.description')}</Label>
         <Textarea id="description" value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} />
+      </div>
+
+      <div>
+        <Label>Departments</Label>
+        <MultiSelect
+          options={DEPARTMENTS}
+          value={form.departments}
+          onChange={next => setForm({ ...form, departments: next })}
+          placeholder="— Select one or more —"
+        />
       </div>
 
       <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">

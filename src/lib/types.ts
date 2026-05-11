@@ -17,6 +17,7 @@ export interface Project {
   name: string;
   description: string | null;
   sector: string | null;
+  departments: string[];
   owner_name: string | null;
   owner_email: string | null;
   owner_mobile: string | null;
@@ -37,6 +38,7 @@ export interface Task {
   project_id: string;
   title: string;
   description: string | null;
+  departments: string[];
   assignee_id: string | null;
   assignee_name: string | null;
   assignee_email: string | null;
