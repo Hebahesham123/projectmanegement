@@ -8,6 +8,7 @@ export const DEPARTMENTS = [
   'Content Center',
   'Customer Experience',
   'Supply Chain',
+  'NS Home',
 ] as const;
 
 export type Department = (typeof DEPARTMENTS)[number];

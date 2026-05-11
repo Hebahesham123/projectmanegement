@@ -53,12 +53,26 @@ export interface Task {
 
 export interface Comment {
   id: string;
-  task_id: string;
+  task_id: string | null;
+  project_id: string | null;
   author_id: string | null;
   parent_id: string | null;
   body: string;
   created_at: string;
   author?: Pick<UserProfile, 'id' | 'full_name' | 'email' | 'avatar_url'>;
+}
+
+export interface Attachment {
+  id: string;
+  task_id: string | null;
+  project_id: string | null;
+  comment_id: string | null;
+  storage_path: string;
+  file_name: string;
+  content_type: string | null;
+  size_bytes: number | null;
+  uploaded_by: string | null;
+  created_at: string;
 }
 
 export interface Notification {
@@ -103,8 +117,13 @@ export type Database = {
       };
       comments: {
         Row: Comment;
-        Insert: Partial<Comment> & Pick<Comment, 'task_id' | 'body'>;
+        Insert: Partial<Comment> & Pick<Comment, 'body'>;
         Update: Partial<Comment>;
+      };
+      attachments: {
+        Row: Attachment;
+        Insert: Partial<Attachment> & Pick<Attachment, 'storage_path' | 'file_name'>;
+        Update: Partial<Attachment>;
       };
       notifications: {
         Row: Notification;

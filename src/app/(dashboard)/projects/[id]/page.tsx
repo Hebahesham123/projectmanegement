@@ -18,6 +18,8 @@ import { TaskForm } from '@/components/tasks/TaskForm';
 import { TaskList } from '@/components/tasks/TaskList';
 import { KanbanBoard } from '@/components/tasks/KanbanBoard';
 import { TaskComments } from '@/components/tasks/TaskComments';
+import { ProjectComments } from '@/components/projects/ProjectComments';
+import { Attachments } from '@/components/attachments/Attachments';
 import { Progress } from '@/components/ui/Progress';
 import { formatDate, projectActualDuration, projectHealth, healthClasses, cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -146,6 +148,17 @@ export default function ProjectDetailPage() {
         </CardBody>
       </Card>
 
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle>Attachments</CardTitle></CardHeader>
+          <CardBody><Attachments parent={{ project_id: project.id }} /></CardBody>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Comments</CardTitle></CardHeader>
+          <CardBody><ProjectComments projectId={project.id} /></CardBody>
+        </Card>
+      </div>
+
       <Modal open={editProjectOpen} onClose={() => setEditProjectOpen(false)} title={t('project.edit')} size="lg">
         <ProjectForm initial={project} onDone={() => setEditProjectOpen(false)} />
       </Modal>
@@ -169,6 +182,10 @@ export default function ProjectDetailPage() {
                 </Button>
               </div>
             )}
+            <div className="border-t border-slate-200 pt-4 dark:border-slate-800">
+              <h4 className="mb-3 text-sm font-semibold">Attachments</h4>
+              <Attachments parent={{ task_id: taskEditing.id }} />
+            </div>
             <div className="border-t border-slate-200 pt-4 dark:border-slate-800">
               <h4 className="mb-3 text-sm font-semibold">{t('task.comments')}</h4>
               <TaskComments taskId={taskEditing.id} />
