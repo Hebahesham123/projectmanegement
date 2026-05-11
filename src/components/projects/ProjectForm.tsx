@@ -9,7 +9,7 @@ import { MultiSelect } from '@/components/ui/MultiSelect';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useData } from '@/lib/store/data';
-import { DEPARTMENTS, PROJECT_MANAGERS } from '@/lib/constants';
+import { DEPARTMENTS_TOP, DEPARTMENT_GROUPS, PROJECT_MANAGERS } from '@/lib/constants';
 import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import type { Project, ProjectStatus } from '@/lib/types';
@@ -304,7 +304,8 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
         <div>
           <Label>Departments</Label>
           <MultiSelect
-            options={DEPARTMENTS}
+            options={DEPARTMENTS_TOP}
+            groups={DEPARTMENT_GROUPS}
             value={form.departments}
             onChange={next => setForm({ ...form, departments: next })}
             placeholder="— Select one or more —"
