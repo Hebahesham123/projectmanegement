@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useUrlState } from '@/lib/hooks/useUrlState';
 import { FolderKanban, Zap, AlertTriangle, TrendingUp, ListChecks, Clock } from 'lucide-react';
 import { useData } from '@/lib/store/data';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
@@ -37,8 +38,8 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
   const [activeKpi, setActiveKpi] = useState<KpiKey | null>(null);
-  const [department, setDepartment] = useState<string | 'all'>('all');
-  const [manager, setManager] = useState<string | 'all'>('all');
+  const [department, setDepartment] = useUrlState('dept', 'all');
+  const [manager, setManager] = useUrlState('mgr', 'all');
 
   const departmentOptions = useMemo(() => {
     const set = new Set<string>(DEPARTMENTS);
@@ -118,6 +119,14 @@ export default function DashboardPage() {
             <option value="all">All managers</option>
             {managerOptions.map(m => <option key={m} value={m}>{m}</option>)}
           </Select>
+          {(department !== 'all' || manager !== 'all') && (
+            <button
+              onClick={() => { setDepartment('all'); setManager('all'); }}
+              className="rounded-xl border border-slate-200 px-3 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       </div>
 

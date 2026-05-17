@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useUrlState } from '@/lib/hooks/useUrlState';
 import Link from 'next/link';
 import { Search, Download } from 'lucide-react';
 import { useData } from '@/lib/store/data';
@@ -19,10 +20,11 @@ import { DEPARTMENTS } from '@/lib/constants';
 export default function TasksPage() {
   const { t } = useI18n();
   const { tasks, projects, hydrated } = useData();
-  const [q, setQ] = useState('');
-  const [status, setStatus] = useState<TaskStatus | 'all'>('all');
-  const [projectId, setProjectId] = useState<string | 'all'>('all');
-  const [department, setDepartment] = useState<string | 'all'>('all');
+  const [q, setQ] = useUrlState('q', '');
+  const [statusRaw, setStatus] = useUrlState('status', 'all');
+  const status = statusRaw as TaskStatus | 'all';
+  const [projectId, setProjectId] = useUrlState('project', 'all');
+  const [department, setDepartment] = useUrlState('dept', 'all');
 
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
   const today = new Date().toISOString().slice(0, 10);
@@ -125,6 +127,15 @@ export default function TasksPage() {
           <option value="all">{t('common.all')} — Project</option>
           {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </Select>
+        {(q || status !== 'all' || department !== 'all' || projectId !== 'all') && (
+          <button
+            type="button"
+            onClick={() => { setQ(''); setStatus('all'); setDepartment('all'); setProjectId('all'); }}
+            className="rounded-xl border border-slate-200 px-3 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       <Card>

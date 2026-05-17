@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { useUrlState } from '@/lib/hooks/useUrlState';
 import Link from 'next/link';
 import { Plus, FolderKanban, Search, Download, LayoutGrid, LayoutList, ChevronRight } from 'lucide-react';
 import { useData } from '@/lib/store/data';
@@ -23,13 +24,16 @@ export default function ProjectsPage() {
   const { t } = useI18n();
   const { profile } = useAuth();
   const { projects, tasks, users, hydrated } = useData();
-  const [q, setQ] = useState('');
-  const [status, setStatus] = useState<ProjectStatus | 'all'>('all');
-  const [memberId, setMemberId] = useState<string | 'all'>('all');
-  const [department, setDepartment] = useState<string | 'all'>('all');
-  const [manager, setManager] = useState<string | 'all'>('all');
-  const [sort, setSort] = useState<'recent' | 'name' | 'completion' | 'deadline'>('recent');
-  const [view, setView] = useState<'list' | 'grid'>('list');
+  const [q, setQ] = useUrlState('q', '');
+  const [statusRaw, setStatus] = useUrlState('status', 'all');
+  const status = statusRaw as ProjectStatus | 'all';
+  const [memberId, setMemberId] = useUrlState('member', 'all');
+  const [department, setDepartment] = useUrlState('dept', 'all');
+  const [manager, setManager] = useUrlState('mgr', 'all');
+  const [sortRaw, setSort] = useUrlState('sort', 'recent');
+  const sort = sortRaw as 'recent' | 'name' | 'completion' | 'deadline';
+  const [viewRaw, setView] = useUrlState('view', 'list');
+  const view = viewRaw as 'list' | 'grid';
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const canManage = canManageProjects(profile?.role);
 
@@ -211,6 +215,17 @@ export default function ProjectsPage() {
           <option value="completion">{t('common.sort')}: Completion</option>
           <option value="deadline">{t('common.sort')}: Deadline</option>
         </Select>
+        {(q || status !== 'all' || department !== 'all' || manager !== 'all' || memberId !== 'all') && (
+          <button
+            type="button"
+            onClick={() => {
+              setQ(''); setStatus('all'); setDepartment('all'); setManager('all'); setMemberId('all');
+            }}
+            className="rounded-xl border border-slate-200 px-3 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       {!hydrated ? (
