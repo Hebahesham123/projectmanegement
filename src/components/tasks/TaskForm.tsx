@@ -13,6 +13,7 @@ import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import { UserX } from 'lucide-react';
 import { DictateButton } from '@/components/ui/DictateButton';
+import { logActivity } from '@/lib/activity/log';
 import type { Task, TaskStatus } from '@/lib/types';
 
 function humanStatus(s: string) {
@@ -67,6 +68,33 @@ export function TaskForm({ projectId, initial, onDone }: { projectId: string; in
         old: initial?.id ? { id: initial.id } : null,
         eventType: initial?.id ? 'UPDATE' : 'INSERT',
       });
+
+      if (initial?.id) {
+        const statusChanged = initial.status !== saved.status;
+        const assigneeChangedForLog = (initial.assignee_id ?? null) !== saved.assignee_id;
+        const action = statusChanged ? 'status_changed' : assigneeChangedForLog && saved.assignee_id ? 'assigned' : 'updated';
+        logActivity({
+          actorId: user?.id ?? null,
+          entityType: 'task',
+          entityId: saved.id,
+          action,
+          meta: {
+            title: saved.title,
+            project_id: saved.project_id,
+            from_status: initial.status,
+            to_status: saved.status,
+            assignee_name: saved.assignee_name,
+          },
+        });
+      } else {
+        logActivity({
+          actorId: user?.id ?? null,
+          entityType: 'task',
+          entityId: saved.id,
+          action: 'created',
+          meta: { title: saved.title, project_id: saved.project_id, assignee_name: saved.assignee_name },
+        });
+      }
 
       const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
       const href = `/projects/${saved.project_id}`;

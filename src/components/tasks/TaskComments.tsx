@@ -14,6 +14,7 @@ import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import { Trash2, Pencil } from 'lucide-react';
 import { DictateButton } from '@/components/ui/DictateButton';
+import { logActivity } from '@/lib/activity/log';
 
 export function TaskComments({ taskId }: { taskId: string }) {
   const { user, profile } = useAuth();
@@ -43,9 +44,17 @@ export function TaskComments({ taskId }: { taskId: string }) {
         parent_id: replyTo,
       }).select().single();
       if (res.error) { toast.error(res.error.message); return; }
-      useData.getState().applyComment({ new: res.data as Comment, old: null, eventType: 'INSERT' });
+      const savedComment = res.data as Comment;
+      useData.getState().applyComment({ new: savedComment, old: null, eventType: 'INSERT' });
 
       const task = tasks.find(x => x.id === taskId);
+      logActivity({
+        actorId: user.id,
+        entityType: 'comment',
+        entityId: savedComment.id,
+        action: 'commented',
+        meta: { task_id: taskId, task_title: task?.title, body: body.trim().slice(0, 200) },
+      });
       if (task?.assignee_id && task.assignee_id !== user.id) {
         const href = `/projects/${task.project_id}`;
         const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
@@ -90,9 +99,17 @@ export function TaskComments({ taskId }: { taskId: string }) {
   };
 
   const del = async (id: string) => {
+    const target = allComments.find(c => c.id === id);
     const { error } = await supabase.from('comments').delete().eq('id', id);
     if (error) { toast.error(error.message); return; }
     useData.getState().applyComment({ new: null, old: { id }, eventType: 'DELETE' });
+    logActivity({
+      actorId: user?.id ?? null,
+      entityType: 'comment',
+      entityId: id,
+      action: 'deleted',
+      meta: { task_id: taskId, body: target?.body?.slice(0, 200) },
+    });
   };
 
   const edit = async (id: string, nextBody: string) => {

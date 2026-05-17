@@ -13,6 +13,7 @@ import { DEPARTMENTS_TOP, DEPARTMENT_GROUPS, PROJECT_MANAGERS } from '@/lib/cons
 import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import { DictateButton } from '@/components/ui/DictateButton';
+import { logActivity } from '@/lib/activity/log';
 import type { Project, ProjectStatus } from '@/lib/types';
 
 function humanStatus(s: string) {
@@ -168,6 +169,19 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
         new: saved,
         old: initial?.id ? { id: initial.id } : null,
         eventType: initial?.id ? 'UPDATE' : 'INSERT',
+      });
+
+      logActivity({
+        actorId: user?.id ?? null,
+        entityType: 'project',
+        entityId: saved.id,
+        action: initial?.id ? (initial.status !== saved.status ? 'status_changed' : 'updated') : 'created',
+        meta: {
+          name: saved.name,
+          from_status: initial?.status,
+          to_status: saved.status,
+          owner_name: saved.owner_name,
+        },
       });
 
       const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
