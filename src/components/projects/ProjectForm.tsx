@@ -12,6 +12,7 @@ import { useData } from '@/lib/store/data';
 import { DEPARTMENTS_TOP, DEPARTMENT_GROUPS, PROJECT_MANAGERS } from '@/lib/constants';
 import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
+import { DictateButton } from '@/components/ui/DictateButton';
 import type { Project, ProjectStatus } from '@/lib/types';
 
 function humanStatus(s: string) {
@@ -269,7 +270,18 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
         <Input id="name" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
       </div>
       <div>
-        <Label htmlFor="description">{t('project.description')}</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="description">{t('project.description')}</Label>
+          <DictateButton
+            onTranscript={(chunk) =>
+              setForm(f => {
+                const prev = f.description ?? '';
+                const sep = prev && !prev.endsWith(' ') ? ' ' : '';
+                return { ...f, description: prev + sep + chunk };
+              })
+            }
+          />
+        </div>
         <Textarea id="description" value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} />
       </div>
 

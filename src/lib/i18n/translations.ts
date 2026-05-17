@@ -105,6 +105,10 @@ export const translations = {
     'task.add_comment': 'Add a comment…',
     'task.post': 'Post',
     'task.reply': 'Reply',
+    'dictate.start': 'Dictate',
+    'dictate.stop': 'Stop dictation',
+    'dictate.unsupported': 'Voice input is not supported in this browser',
+    'dictate.error': 'Voice input error',
 
     'task_status.todo': 'To Do',
     'task_status.in_progress': 'In Progress',
@@ -246,6 +250,10 @@ export const translations = {
     'task.add_comment': 'أضف تعليقًا…',
     'task.post': 'إرسال',
     'task.reply': 'رد',
+    'dictate.start': 'إملاء صوتي',
+    'dictate.stop': 'إيقاف الإملاء',
+    'dictate.unsupported': 'الإدخال الصوتي غير مدعوم في هذا المتصفح',
+    'dictate.error': 'خطأ في الإدخال الصوتي',
 
     'task_status.todo': 'للبدء',
     'task_status.in_progress': 'قيد التنفيذ',

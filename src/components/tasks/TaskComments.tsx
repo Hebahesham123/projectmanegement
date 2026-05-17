@@ -13,6 +13,7 @@ import { useData } from '@/lib/store/data';
 import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import { Trash2, Pencil } from 'lucide-react';
+import { DictateButton } from '@/components/ui/DictateButton';
 
 export function TaskComments({ taskId }: { taskId: string }) {
   const { user, profile } = useAuth();
@@ -135,7 +136,12 @@ export function TaskComments({ taskId }: { taskId: string }) {
           placeholder={t('task.add_comment')}
           rows={3}
         />
-        <div className="mt-2 flex justify-end">
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <DictateButton
+            onTranscript={(chunk) =>
+              setBody(prev => (prev && !prev.endsWith(' ') ? prev + ' ' : prev) + chunk)
+            }
+          />
           <Button size="sm" loading={loading} onClick={send} disabled={!body.trim()}>{t('task.post')}</Button>
         </div>
       </div>

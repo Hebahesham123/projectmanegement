@@ -12,6 +12,7 @@ import { useData } from '@/lib/store/data';
 import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import { UserX } from 'lucide-react';
+import { DictateButton } from '@/components/ui/DictateButton';
 import type { Task, TaskStatus } from '@/lib/types';
 
 function humanStatus(s: string) {
@@ -172,7 +173,18 @@ export function TaskForm({ projectId, initial, onDone }: { projectId: string; in
         <Input id="title" required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
       </div>
       <div>
-        <Label htmlFor="description">{t('task.description')}</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="description">{t('task.description')}</Label>
+          <DictateButton
+            onTranscript={(chunk) =>
+              setForm(f => {
+                const prev = f.description ?? '';
+                const sep = prev && !prev.endsWith(' ') ? ' ' : '';
+                return { ...f, description: prev + sep + chunk };
+              })
+            }
+          />
+        </div>
         <Textarea id="description" value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} />
       </div>
 
