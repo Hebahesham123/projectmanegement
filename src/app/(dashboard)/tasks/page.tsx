@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { Search, Download } from 'lucide-react';
 import { useData } from '@/lib/store/data';
+import { usePersistentState } from '@/lib/hooks/usePersistentState';
 import type { TaskStatus } from '@/lib/types';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { Card, CardBody } from '@/components/ui/Card';
@@ -20,10 +21,10 @@ import { HierarchySelect } from '@/components/ui/HierarchySelect';
 export default function TasksPage() {
   const { t } = useI18n();
   const { tasks, projects, hydrated } = useData();
-  const [q, setQ] = useState('');
-  const [status, setStatus] = useState<TaskStatus | 'all'>('all');
-  const [projectId, setProjectId] = useState<string | 'all'>('all');
-  const [department, setDepartment] = useState<string | 'all'>('all');
+  const [q, setQ] = usePersistentState<string>('tasks.filter.q', '');
+  const [status, setStatus] = usePersistentState<TaskStatus | 'all'>('tasks.filter.status', 'all');
+  const [projectId, setProjectId] = usePersistentState<string | 'all'>('tasks.filter.projectId', 'all');
+  const [department, setDepartment] = usePersistentState<string | 'all'>('tasks.filter.department', 'all');
 
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
   const today = new Date().toISOString().slice(0, 10);

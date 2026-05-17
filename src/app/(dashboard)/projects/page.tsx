@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { usePersistentState } from '@/lib/hooks/usePersistentState';
 import Link from 'next/link';
 import { Plus, FolderKanban, Search, Download, LayoutGrid, LayoutList, ChevronRight } from 'lucide-react';
 import { useData } from '@/lib/store/data';
@@ -24,13 +25,13 @@ export default function ProjectsPage() {
   const { t } = useI18n();
   const { profile } = useAuth();
   const { projects, tasks, users, hydrated } = useData();
-  const [q, setQ] = useState('');
-  const [status, setStatus] = useState<ProjectStatus | 'all'>('all');
-  const [memberId, setMemberId] = useState<string | 'all'>('all');
-  const [department, setDepartment] = useState<string | 'all'>('all');
-  const [manager, setManager] = useState<string | 'all'>('all');
-  const [sort, setSort] = useState<'recent' | 'name' | 'completion' | 'deadline'>('recent');
-  const [view, setView] = useState<'list' | 'grid'>('list');
+  const [q, setQ] = usePersistentState<string>('projects.filter.q', '');
+  const [status, setStatus] = usePersistentState<ProjectStatus | 'all'>('projects.filter.status', 'all');
+  const [memberId, setMemberId] = usePersistentState<string | 'all'>('projects.filter.memberId', 'all');
+  const [department, setDepartment] = usePersistentState<string | 'all'>('projects.filter.department', 'all');
+  const [manager, setManager] = usePersistentState<string | 'all'>('projects.filter.manager', 'all');
+  const [sort, setSort] = usePersistentState<'recent' | 'name' | 'completion' | 'deadline'>('projects.filter.sort', 'recent');
+  const [view, setView] = usePersistentState<'list' | 'grid'>('projects.filter.view', 'list');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const canManage = canManageProjects(profile?.role);
 

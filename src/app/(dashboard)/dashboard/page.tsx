@@ -18,6 +18,7 @@ import { Select } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { DEPARTMENTS, DEPARTMENTS_TOP, DEPARTMENT_GROUPS, PROJECT_MANAGERS } from '@/lib/constants';
 import { HierarchySelect } from '@/components/ui/HierarchySelect';
+import { usePersistentState } from '@/lib/hooks/usePersistentState';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { runDeadlineScan } from '@/lib/notifications/deadlineScan';
 
@@ -38,8 +39,8 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
   const [activeKpi, setActiveKpi] = useState<KpiKey | null>(null);
-  const [department, setDepartment] = useState<string | 'all'>('all');
-  const [manager, setManager] = useState<string | 'all'>('all');
+  const [department, setDepartment] = usePersistentState<string | 'all'>('dashboard.filter.department', 'all');
+  const [manager, setManager] = usePersistentState<string | 'all'>('dashboard.filter.manager', 'all');
 
   const departmentOptions = useMemo(() => {
     const known = new Set<string>(DEPARTMENTS);
