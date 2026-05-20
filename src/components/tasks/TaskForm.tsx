@@ -21,7 +21,7 @@ function formatYmd(d: string) {
   try { return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return d; }
 }
 
-export function TaskForm({ projectId, initial, onDone }: { projectId: string; initial?: Partial<Task>; onDone?: () => void }) {
+export function TaskForm({ projectId, initial, onDone, readOnly = false }: { projectId: string; initial?: Partial<Task>; onDone?: () => void; readOnly?: boolean }) {
   const { t } = useI18n();
   const { user } = useAuth();
   const supabase = createClient();
@@ -167,6 +167,7 @@ export function TaskForm({ projectId, initial, onDone }: { projectId: string; in
 
   return (
     <form onSubmit={save} className="space-y-4">
+      <fieldset disabled={readOnly} className="space-y-4 disabled:opacity-90">
       <div>
         <Label htmlFor="title">{t('task.title')}</Label>
         <Input id="title" required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
@@ -250,9 +251,10 @@ export function TaskForm({ projectId, initial, onDone }: { projectId: string; in
         </div>
       </div>
 
+      </fieldset>
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onDone}>{t('common.cancel')}</Button>
-        <Button type="submit" loading={loading}>{t('common.save')}</Button>
+        {!readOnly && <Button type="submit" loading={loading}>{t('common.save')}</Button>}
       </div>
     </form>
   );

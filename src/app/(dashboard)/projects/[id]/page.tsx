@@ -6,7 +6,8 @@ import { Pencil, Plus, Trash2, ArrowLeft, LayoutList, LayoutGrid } from 'lucide-
 import { createClient } from '@/lib/supabase/client';
 import type { Task } from '@/lib/types';
 import { useData } from '@/lib/store/data';
-import { useAuth, canManageProjects } from '@/lib/auth/AuthProvider';
+import { useScopedData } from '@/lib/hooks/useScopedData';
+import { useAuth, canManageProjects, canEditDelete } from '@/lib/auth/AuthProvider';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -30,8 +31,10 @@ export default function ProjectDetailPage() {
   const { t } = useI18n();
   const { profile } = useAuth();
   const canManage = canManageProjects(profile?.role);
+  const canMutate = canEditDelete(profile);
   const supabase = createClient();
-  const { projects, tasks, hydrated } = useData();
+  const { hydrated } = useData();
+  const { projects, tasks } = useScopedData();
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [editProjectOpen, setEditProjectOpen] = useState(false);
   const [taskEditing, setTaskEditing] = useState<Task | null>(null);
@@ -107,7 +110,7 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
               </div>
-              {canManage && (
+              {canMutate && (
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setEditProjectOpen(true)}><Pencil className="h-4 w-4" />{t('common.edit')}</Button>
                   <Button variant="danger" onClick={deleteProject}><Trash2 className="h-4 w-4" />{t('common.delete')}</Button>
@@ -164,7 +167,7 @@ export default function ProjectDetailPage() {
       </div>
 
       <Modal open={editProjectOpen} onClose={() => setEditProjectOpen(false)} title={t('project.edit')} size="lg">
-        <ProjectForm initial={project} onDone={() => setEditProjectOpen(false)} />
+        <ProjectForm initial={project} onDone={() => setEditProjectOpen(false)} readOnly={!canMutate} />
       </Modal>
 
       <Modal open={newTaskOpen} onClose={() => setNewTaskOpen(false)} title={t('task.new')} size="lg">
@@ -178,8 +181,9 @@ export default function ProjectDetailPage() {
               projectId={project.id}
               initial={taskEditing}
               onDone={() => setTaskEditing(null)}
+              readOnly={!canMutate}
             />
-            {canManage && (
+            {canMutate && (
               <div className="flex justify-end">
                 <Button variant="danger" size="sm" onClick={() => deleteTask(taskEditing.id)}>
                   <Trash2 className="h-4 w-4" />{t('common.delete')}

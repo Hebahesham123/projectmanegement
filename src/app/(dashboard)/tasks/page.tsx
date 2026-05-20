@@ -5,6 +5,7 @@ import { useUrlState } from '@/lib/hooks/useUrlState';
 import Link from 'next/link';
 import { Search, Download } from 'lucide-react';
 import { useData } from '@/lib/store/data';
+import { useScopedData } from '@/lib/hooks/useScopedData';
 import type { TaskStatus } from '@/lib/types';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { Card, CardBody } from '@/components/ui/Card';
@@ -19,7 +20,8 @@ import { DEPARTMENTS } from '@/lib/constants';
 
 export default function TasksPage() {
   const { t } = useI18n();
-  const { tasks, projects, hydrated } = useData();
+  const { hydrated } = useData();
+  const { tasks, projects } = useScopedData();
   const [q, setQ] = useUrlState('q', '');
   const [statusRaw, setStatus] = useUrlState('status', 'all');
   const status = statusRaw as TaskStatus | 'all';

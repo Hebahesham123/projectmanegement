@@ -22,7 +22,7 @@ function formatYmd(d: string | null | undefined) {
   try { return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return d; }
 }
 
-export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; onDone?: () => void }) {
+export function ProjectForm({ initial, onDone, readOnly = false }: { initial?: Partial<Project>; onDone?: () => void; readOnly?: boolean }) {
   const { t } = useI18n();
   const { user } = useAuth();
   const supabase = createClient();
@@ -264,6 +264,7 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
 
   return (
     <form onSubmit={save} className="space-y-4">
+      <fieldset disabled={readOnly} className="space-y-4 disabled:opacity-90">
       <div>
         <Label htmlFor="name">{t('project.name')}</Label>
         <Input id="name" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
@@ -389,11 +390,12 @@ export function ProjectForm({ initial, onDone }: { initial?: Partial<Project>; o
         </div>
       </div>
 
+      </fieldset>
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={() => (onDone ? onDone() : router.back())}>
           {t('common.cancel')}
         </Button>
-        <Button type="submit" loading={loading}>{t('common.save')}</Button>
+        {!readOnly && <Button type="submit" loading={loading}>{t('common.save')}</Button>}
       </div>
     </form>
   );

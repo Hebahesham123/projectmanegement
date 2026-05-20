@@ -5,6 +5,7 @@ import { useUrlState } from '@/lib/hooks/useUrlState';
 import Link from 'next/link';
 import { Plus, FolderKanban, Search, Download, LayoutGrid, LayoutList, ChevronRight } from 'lucide-react';
 import { useData } from '@/lib/store/data';
+import { useScopedData } from '@/lib/hooks/useScopedData';
 import { useAuth, canManageProjects } from '@/lib/auth/AuthProvider';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import type { ProjectStatus } from '@/lib/types';
@@ -23,7 +24,8 @@ import { DEPARTMENTS, PROJECT_MANAGERS } from '@/lib/constants';
 export default function ProjectsPage() {
   const { t } = useI18n();
   const { profile } = useAuth();
-  const { projects, tasks, users, hydrated } = useData();
+  const { users, hydrated } = useData();
+  const { projects, tasks } = useScopedData();
   const [q, setQ] = useUrlState('q', '');
   const [statusRaw, setStatus] = useUrlState('status', 'all');
   const status = statusRaw as ProjectStatus | 'all';

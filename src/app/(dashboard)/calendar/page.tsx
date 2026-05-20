@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useData } from '@/lib/store/data';
+import { useScopedData } from '@/lib/hooks/useScopedData';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -13,7 +14,8 @@ import { addMonths, endOfMonth, format, getDay, startOfMonth, subMonths } from '
 
 export default function CalendarPage() {
   const { t, locale } = useI18n();
-  const { tasks, projects, hydrated } = useData();
+  const { hydrated } = useData();
+  const { tasks, projects } = useScopedData();
   const [cursor, setCursor] = useState(new Date());
 
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useUrlState } from '@/lib/hooks/useUrlState';
 import { FolderKanban, Zap, AlertTriangle, TrendingUp, ListChecks, Clock } from 'lucide-react';
 import { useData } from '@/lib/store/data';
+import { useScopedData } from '@/lib/hooks/useScopedData';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 import { KpiDetails, type KpiKey } from '@/components/dashboard/KpiDetails';
@@ -24,7 +25,8 @@ import { runDeadlineScan } from '@/lib/notifications/deadlineScan';
 export default function DashboardPage() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const { projects: allProjects, tasks: allTasks, comments, users, notifications, hydrated } = useData();
+  const { comments, users, notifications, hydrated } = useData();
+  const { projects: allProjects, tasks: allTasks } = useScopedData();
 
   useEffect(() => {
     if (!hydrated) return;
