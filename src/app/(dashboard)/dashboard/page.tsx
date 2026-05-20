@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useUrlState } from '@/lib/hooks/useUrlState';
 import { FolderKanban, Zap, AlertTriangle, TrendingUp, ListChecks, Clock } from 'lucide-react';
 import { useData } from '@/lib/store/data';
 import { useScopedData } from '@/lib/hooks/useScopedData';
@@ -18,7 +17,9 @@ import { TasksPerProjectCluster } from '@/components/dashboard/TasksPerProjectCl
 import { Card, CardHeader, CardTitle, CardBody } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { DEPARTMENTS, PROJECT_MANAGERS } from '@/lib/constants';
+import { DEPARTMENTS, DEPARTMENTS_TOP, DEPARTMENT_GROUPS, PROJECT_MANAGERS } from '@/lib/constants';
+import { HierarchySelect } from '@/components/ui/HierarchySelect';
+import { usePersistentState } from '@/lib/hooks/usePersistentState';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { runDeadlineScan } from '@/lib/notifications/deadlineScan';
 
@@ -40,16 +41,17 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
   const [activeKpi, setActiveKpi] = useState<KpiKey | null>(null);
-  const [department, setDepartment] = useUrlState('dept', 'all');
-  const [manager, setManager] = useUrlState('mgr', 'all');
+  const [department, setDepartment] = usePersistentState<string | 'all'>('dashboard.filter.department', 'all');
+  const [manager, setManager] = usePersistentState<string | 'all'>('dashboard.filter.manager', 'all');
 
   const departmentOptions = useMemo(() => {
-    const set = new Set<string>(DEPARTMENTS);
+    const known = new Set<string>(DEPARTMENTS);
+    const extras = new Set<string>();
     for (const p of allProjects) {
-      for (const d of p.departments ?? []) set.add(d);
-      if (p.sector && !(p.departments ?? []).length) set.add(p.sector);
+      for (const d of p.departments ?? []) if (!known.has(d)) extras.add(d);
+      if (p.sector && !(p.departments ?? []).length && !known.has(p.sector)) extras.add(p.sector);
     }
-    return Array.from(set).sort();
+    return [...DEPARTMENTS_TOP, ...Array.from(extras).sort()];
   }, [allProjects]);
 
   const managerOptions = useMemo(() => {
@@ -113,10 +115,14 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Select value={department} onChange={e => setDepartment(e.target.value)} className="sm:w-56">
-            <option value="all">All departments</option>
-            {departmentOptions.map(d => <option key={d} value={d}>{d}</option>)}
-          </Select>
+          <HierarchySelect
+            value={department}
+            onChange={v => setDepartment(v as string | 'all')}
+            options={departmentOptions}
+            groups={DEPARTMENT_GROUPS}
+            allLabel="All departments"
+            className="sm:w-56"
+          />
           <Select value={manager} onChange={e => setManager(e.target.value)} className="sm:w-56">
             <option value="all">All managers</option>
             {managerOptions.map(m => <option key={m} value={m}>{m}</option>)}

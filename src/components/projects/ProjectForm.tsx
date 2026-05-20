@@ -9,9 +9,11 @@ import { MultiSelect } from '@/components/ui/MultiSelect';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useData } from '@/lib/store/data';
-import { DEPARTMENTS, PROJECT_MANAGERS } from '@/lib/constants';
+import { DEPARTMENTS_TOP, DEPARTMENT_GROUPS, PROJECT_MANAGERS } from '@/lib/constants';
 import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
+import { DictateButton } from '@/components/ui/DictateButton';
+import { logActivity } from '@/lib/activity/log';
 import type { Project, ProjectStatus } from '@/lib/types';
 
 function humanStatus(s: string) {
@@ -169,6 +171,19 @@ export function ProjectForm({ initial, onDone, readOnly = false }: { initial?: P
         eventType: initial?.id ? 'UPDATE' : 'INSERT',
       });
 
+      logActivity({
+        actorId: user?.id ?? null,
+        entityType: 'project',
+        entityId: saved.id,
+        action: initial?.id ? (initial.status !== saved.status ? 'status_changed' : 'updated') : 'created',
+        meta: {
+          name: saved.name,
+          from_status: initial?.status,
+          to_status: saved.status,
+          owner_name: saved.owner_name,
+        },
+      });
+
       const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
       const href = `/projects/${saved.id}`;
 
@@ -270,7 +285,18 @@ export function ProjectForm({ initial, onDone, readOnly = false }: { initial?: P
         <Input id="name" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
       </div>
       <div>
-        <Label htmlFor="description">{t('project.description')}</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="description">{t('project.description')}</Label>
+          <DictateButton
+            onTranscript={(chunk) =>
+              setForm(f => {
+                const prev = f.description ?? '';
+                const sep = prev && !prev.endsWith(' ') ? ' ' : '';
+                return { ...f, description: prev + sep + chunk };
+              })
+            }
+          />
+        </div>
         <Textarea id="description" value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} />
       </div>
 
@@ -305,7 +331,8 @@ export function ProjectForm({ initial, onDone, readOnly = false }: { initial?: P
         <div>
           <Label>Departments</Label>
           <MultiSelect
-            options={DEPARTMENTS}
+            options={DEPARTMENTS_TOP}
+            groups={DEPARTMENT_GROUPS}
             value={form.departments}
             onChange={next => setForm({ ...form, departments: next })}
             placeholder="— Select one or more —"

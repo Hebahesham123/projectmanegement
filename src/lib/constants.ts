@@ -1,4 +1,5 @@
-export const DEPARTMENTS = [
+// Top-level departments shown in the picker.
+export const DEPARTMENTS_TOP = [
   'Technology',
   'Marketing',
   'Commercial',
@@ -13,7 +14,39 @@ export const DEPARTMENTS = [
   'قطاع الجمله',
 ] as const;
 
-export type Department = (typeof DEPARTMENTS)[number];
+// Hierarchical groups: parent -> children. Children are themselves valid selectable values.
+// Supports nested groups (a child can be a parent in this map).
+export const DEPARTMENT_GROUPS: Record<string, readonly string[]> = {
+  'Business Support': [
+    'Business Support / الشئون الهندسية',
+    'Business Support / الشئون القانونية',
+    'Business Support / الشئون الإدارية',
+  ],
+  'Business Support / الشئون الإدارية': [
+    'Business Support / الشئون الإدارية / الأمن',
+    'Business Support / الشئون الإدارية / النظافة',
+    'Business Support / الشئون الإدارية / الأدوات المكتبية',
+    'Business Support / الشئون الإدارية / المخزن',
+    'Business Support / الشئون الإدارية / الاستقبال',
+  ],
+};
+
+// Flat list of every valid department value (top-level + all descendants).
+// Use this for filter Set membership checks against saved values.
+function flattenGroups(top: readonly string[], groups: Record<string, readonly string[]>): string[] {
+  const out: string[] = [];
+  const walk = (name: string) => {
+    out.push(name);
+    const kids = groups[name];
+    if (kids) kids.forEach(walk);
+  };
+  top.forEach(walk);
+  return out;
+}
+
+export const DEPARTMENTS = flattenGroups(DEPARTMENTS_TOP, DEPARTMENT_GROUPS) as readonly string[];
+
+export type Department = string;
 
 // Allowed Project Managers
 export const PROJECT_MANAGERS = [
@@ -43,4 +76,3 @@ export function isRestrictedEmail(email?: string | null) {
   const e = email.trim().toLowerCase();
   return (RESTRICTED_USER_EMAILS as readonly string[]).includes(e);
 }
-

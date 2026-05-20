@@ -23,13 +23,14 @@ import { ProjectComments } from '@/components/projects/ProjectComments';
 import { Attachments } from '@/components/attachments/Attachments';
 import { Progress } from '@/components/ui/Progress';
 import { formatDate, projectActualDuration, projectHealth, healthClasses, cn } from '@/lib/utils';
+import { logActivity } from '@/lib/activity/log';
 import toast from 'react-hot-toast';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { t } = useI18n();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const canManage = canManageProjects(profile?.role);
   const canMutate = canEditDelete(profile);
   const supabase = createClient();
@@ -48,16 +49,32 @@ export default function ProjectDetailPage() {
 
   const deleteProject = async () => {
     if (!confirm(t('common.confirm_delete'))) return;
+    const name = project?.name;
     const { error } = await supabase.from('projects').delete().eq('id', id);
     if (error) { toast.error(error.message); return; }
+    logActivity({
+      actorId: user?.id ?? null,
+      entityType: 'project',
+      entityId: id,
+      action: 'deleted',
+      meta: { name },
+    });
     toast.success('Project deleted');
     router.push('/projects');
   };
 
   const deleteTask = async (tid: string) => {
     if (!confirm(t('common.confirm_delete'))) return;
+    const task = tasks.find(x => x.id === tid);
     const { error } = await supabase.from('tasks').delete().eq('id', tid);
-    if (error) toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
+    logActivity({
+      actorId: user?.id ?? null,
+      entityType: 'task',
+      entityId: tid,
+      action: 'deleted',
+      meta: { title: task?.title, project_id: task?.project_id },
+    });
     setTaskEditing(null);
   };
 

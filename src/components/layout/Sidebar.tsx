@@ -12,17 +12,20 @@ import {
   Users,
   Settings,
   Mail,
+  Activity,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { canViewActivityLog } from '@/lib/activity/log';
 
 export function Sidebar({ onClose, onNavigate }: { onClose?: () => void; onNavigate?: () => void }) {
   const pathname = usePathname();
   const { t } = useI18n();
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
+  const canSeeActivity = canViewActivityLog(profile);
 
   const nav = [
     { href: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
@@ -31,6 +34,7 @@ export function Sidebar({ onClose, onNavigate }: { onClose?: () => void; onNavig
     { href: '/calendar', label: t('nav.calendar'), icon: CalendarDays },
     { href: '/notifications', label: t('nav.notifications'), icon: Bell },
     { href: '/team', label: t('nav.team'), icon: Users },
+    ...(canSeeActivity ? [{ href: '/activity', label: 'Activity log', icon: Activity }] : []),
     ...(isAdmin ? [{ href: '/settings/emails', label: 'Email log', icon: Mail }] : []),
     { href: '/settings', label: t('nav.settings'), icon: Settings },
   ];

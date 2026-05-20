@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function MultiSelect({
@@ -10,13 +10,18 @@ export function MultiSelect({
   onChange,
   placeholder = 'Select…',
   className,
+  groups,
 }: {
   options: readonly string[];
   value: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
   className?: string;
+  // Optional parent->children map for hierarchical display. Children are valid options too.
+  groups?: Record<string, readonly string[]>;
 }) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const toggleExpand = (opt: string) => setExpanded(s => ({ ...s, [opt]: !s[opt] }));
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -62,27 +67,53 @@ export function MultiSelect({
 
       {open && (
         <div className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
-          {options.map(opt => {
-            const selected = value.includes(opt);
-            return (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => toggle(opt)}
-                className={cn(
-                  'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm',
-                  selected
-                    ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200'
-                    : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
-                )}
-              >
-                {opt}
-                {selected && <Check className="h-4 w-4" />}
-              </button>
-            );
-          })}
+          {options.map(opt => renderOption(opt, 0))}
         </div>
       )}
     </div>
   );
+
+  function renderOption(opt: string, depth: number): React.ReactNode {
+    const selected = value.includes(opt);
+    const children = groups?.[opt];
+    const hasChildren = !!children && children.length > 0;
+    const isOpen = !!expanded[opt];
+    return (
+      <div key={opt}>
+        <div
+          className={cn(
+            'flex w-full items-center gap-1 rounded-lg pe-3 text-sm',
+            selected
+              ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200'
+              : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
+          )}
+          style={{ paddingInlineStart: 12 + depth * 16 }}
+        >
+          {hasChildren ? (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); toggleExpand(opt); }}
+              className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              aria-label={isOpen ? 'Collapse' : 'Expand'}
+            >
+              {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            </button>
+          ) : (
+            <span className="w-6" />
+          )}
+          <button
+            type="button"
+            onClick={() => toggle(opt)}
+            className="flex flex-1 items-center justify-between py-2 text-start"
+          >
+            <span>{opt}</span>
+            {selected && <Check className="h-4 w-4" />}
+          </button>
+        </div>
+        {hasChildren && isOpen && (
+          <div>{children!.map(child => renderOption(child, depth + 1))}</div>
+        )}
+      </div>
+    );
+  }
 }

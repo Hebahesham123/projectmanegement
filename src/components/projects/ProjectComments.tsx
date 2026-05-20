@@ -13,6 +13,8 @@ import { useData } from '@/lib/store/data';
 import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import { Trash2 } from 'lucide-react';
+import { DictateButton } from '@/components/ui/DictateButton';
+import { logActivity } from '@/lib/activity/log';
 
 export function ProjectComments({ projectId }: { projectId: string }) {
   const { user, profile } = useAuth();
@@ -43,9 +45,17 @@ export function ProjectComments({ projectId }: { projectId: string }) {
         parent_id: replyTo,
       }).select().single();
       if (res.error) { toast.error(res.error.message); return; }
-      useData.getState().applyComment({ new: res.data as Comment, old: null, eventType: 'INSERT' });
+      const savedComment = res.data as Comment;
+      useData.getState().applyComment({ new: savedComment, old: null, eventType: 'INSERT' });
 
       const project = projects.find(p => p.id === projectId);
+      logActivity({
+        actorId: user.id,
+        entityType: 'comment',
+        entityId: savedComment.id,
+        action: 'commented',
+        meta: { project_id: projectId, project_name: project?.name, body: body.trim().slice(0, 200) },
+      });
       if (project?.owner_email) {
         const href = `/projects/${projectId}`;
         const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
@@ -92,9 +102,17 @@ export function ProjectComments({ projectId }: { projectId: string }) {
   };
 
   const del = async (id: string) => {
+    const target = allComments.find(c => c.id === id);
     const { error } = await supabase.from('comments').delete().eq('id', id);
     if (error) { toast.error(error.message); return; }
     useData.getState().applyComment({ new: null, old: { id }, eventType: 'DELETE' });
+    logActivity({
+      actorId: user?.id ?? null,
+      entityType: 'comment',
+      entityId: id,
+      action: 'deleted',
+      meta: { project_id: projectId, body: target?.body?.slice(0, 200) },
+    });
   };
 
   const roots = comments.filter(c => !c.parent_id);
@@ -129,7 +147,12 @@ export function ProjectComments({ projectId }: { projectId: string }) {
           placeholder={t('task.add_comment')}
           rows={3}
         />
-        <div className="mt-2 flex justify-end">
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <DictateButton
+            onTranscript={(chunk) =>
+              setBody(prev => (prev && !prev.endsWith(' ') ? prev + ' ' : prev) + chunk)
+            }
+          />
           <Button size="sm" loading={loading} onClick={send} disabled={!body.trim()}>{t('task.post')}</Button>
         </div>
       </div>
