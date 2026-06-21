@@ -7,6 +7,7 @@ import { useI18n } from '@/lib/i18n/LanguageProvider';
 const COLORS: Record<string, string> = {
   todo: '#94a3b8',
   in_progress: '#f59e0b',
+  on_going: '#0ea5e9',
   done: '#10b981',
   blocked: '#ef4444',
 };

@@ -16,6 +16,7 @@ export function TasksPerProjectCluster({ projects, tasks }: { projects: Project[
         name: p.name.length > 28 ? p.name.slice(0, 28) + '…' : p.name,
         todo: ptasks.filter(x => x.status === 'todo').length,
         in_progress: ptasks.filter(x => x.status === 'in_progress').length,
+        on_going: ptasks.filter(x => x.status === 'on_going').length,
         done: ptasks.filter(x => x.status === 'done').length,
         blocked: ptasks.filter(x => x.status === 'blocked').length,
         total: ptasks.length,
@@ -45,6 +46,7 @@ export function TasksPerProjectCluster({ projects, tasks }: { projects: Project[
           <Legend wrapperStyle={{ fontSize: 12 }} />
           <Bar dataKey="todo" stackId="a" name={t('task_status.todo')} fill="#d4ab86" />
           <Bar dataKey="in_progress" stackId="a" name={t('task_status.in_progress')} fill="#b97f4e" />
+          <Bar dataKey="on_going" stackId="a" name={t('task_status.on_going')} fill="#0ea5e9" />
           <Bar dataKey="done" stackId="a" name={t('task_status.done')} fill="#6b3e26" />
           <Bar dataKey="blocked" stackId="a" name={t('task_status.blocked')} fill="#ef4444" />
         </BarChart>

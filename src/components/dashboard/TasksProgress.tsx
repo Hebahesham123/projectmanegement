@@ -17,7 +17,7 @@ export function TasksProgress({ tasks, projects, limit = 8 }: { tasks: Task[]; p
   const projectMap = new Map(projects.map(p => [p.id, p]));
   const today = new Date().toISOString().slice(0, 10);
 
-  const order: Record<Task['status'], number> = { in_progress: 0, todo: 1, blocked: 2, done: 3 };
+  const order: Record<Task['status'], number> = { in_progress: 0, on_going: 1, todo: 2, blocked: 3, done: 4 };
   const list = [...tasks]
     .sort((a, b) => {
       const s = order[a.status] - order[b.status];

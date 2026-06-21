@@ -85,6 +85,7 @@ export const translations = {
 
     'status.not_started': 'Not Started',
     'status.in_progress': 'In Progress',
+    'status.on_going': 'On Going',
     'status.completed': 'Completed',
     'status.delayed': 'Delayed',
 
@@ -112,6 +113,7 @@ export const translations = {
 
     'task_status.todo': 'To Do',
     'task_status.in_progress': 'In Progress',
+    'task_status.on_going': 'On Going',
     'task_status.done': 'Done',
     'task_status.blocked': 'Blocked',
 
@@ -230,6 +232,7 @@ export const translations = {
 
     'status.not_started': 'لم يبدأ',
     'status.in_progress': 'قيد التنفيذ',
+    'status.on_going': 'جارٍ',
     'status.completed': 'مكتمل',
     'status.delayed': 'متأخر',
 
@@ -257,6 +260,7 @@ export const translations = {
 
     'task_status.todo': 'للبدء',
     'task_status.in_progress': 'قيد التنفيذ',
+    'task_status.on_going': 'جارٍ',
     'task_status.done': 'مكتمل',
     'task_status.blocked': 'متوقف',
 

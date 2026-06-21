@@ -388,6 +388,7 @@ export function ProjectForm({ initial, onDone, readOnly = false }: { initial?: P
           <Select id="status" value={form.status} onChange={e => handleStatusChange(e.target.value as ProjectStatus)}>
             <option value="not_started">{t('status.not_started')}</option>
             <option value="in_progress">{t('status.in_progress')}</option>
+            <option value="on_going">{t('status.on_going')}</option>
             <option value="completed">{t('status.completed')}</option>
             <option value="delayed">{t('status.delayed')}</option>
           </Select>

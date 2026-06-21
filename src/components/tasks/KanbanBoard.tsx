@@ -9,7 +9,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { useI18n } from '@/lib/i18n/LanguageProvider';
 import { Badge } from '@/components/ui/Badge';
 
-const COLUMNS: TaskStatus[] = ['todo', 'in_progress', 'blocked', 'done'];
+const COLUMNS: TaskStatus[] = ['todo', 'in_progress', 'on_going', 'blocked', 'done'];
 
 function TaskCard({ task, onClick }: { task: Task; onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
@@ -82,7 +82,7 @@ export function KanbanBoard({ tasks, onCardClick }: { tasks: Task[]; onCardClick
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const byColumn = useMemo(() => {
-    const map: Record<TaskStatus, Task[]> = { todo: [], in_progress: [], blocked: [], done: [] };
+    const map: Record<TaskStatus, Task[]> = { todo: [], in_progress: [], on_going: [], blocked: [], done: [] };
     for (const t of local) map[t.status].push(t);
     return map;
   }, [local]);

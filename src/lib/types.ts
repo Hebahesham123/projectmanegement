@@ -1,6 +1,6 @@
 export type UserRole = 'admin' | 'project_manager' | 'team_member';
-export type ProjectStatus = 'not_started' | 'in_progress' | 'completed' | 'delayed';
-export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'blocked';
+export type ProjectStatus = 'not_started' | 'in_progress' | 'on_going' | 'completed' | 'delayed';
+export type TaskStatus = 'todo' | 'in_progress' | 'on_going' | 'done' | 'blocked';
 
 export interface UserProfile {
   id: string;

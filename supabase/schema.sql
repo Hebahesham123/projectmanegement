@@ -31,12 +31,16 @@ do $enums$ begin
     create type user_role as enum ('admin', 'project_manager', 'team_member');
   end if;
   if not exists (select 1 from pg_type where typname = 'project_status') then
-    create type project_status as enum ('not_started', 'in_progress', 'completed', 'delayed');
+    create type project_status as enum ('not_started', 'in_progress', 'on_going', 'completed', 'delayed');
   end if;
   if not exists (select 1 from pg_type where typname = 'task_status') then
-    create type task_status as enum ('todo', 'in_progress', 'done', 'blocked');
+    create type task_status as enum ('todo', 'in_progress', 'on_going', 'done', 'blocked');
   end if;
 end $enums$;
+
+-- Idempotent additions for existing databases (ADD VALUE cannot run inside the do-block above)
+alter type project_status add value if not exists 'on_going';
+alter type task_status add value if not exists 'on_going';
 
 -- ----------------------------------------------------------------------------
 -- USERS (profile table, 1-1 with auth.users)
@@ -226,6 +230,14 @@ begin
     ),
     status = (
       case
+        -- Preserve manually-set 'on_going' unless all tasks are done
+        when p.status = 'on_going'::project_status
+         and not (
+           (select count(*) from public.tasks where project_id = p_id) > 0
+           and (select count(*) from public.tasks where project_id = p_id)
+             = (select count(*) from public.tasks where project_id = p_id and status = 'done')
+         )
+          then 'on_going'::project_status
         when (select count(*) from public.tasks where project_id = p_id) = 0
           then 'not_started'::project_status
         when (select count(*) from public.tasks where project_id = p_id)

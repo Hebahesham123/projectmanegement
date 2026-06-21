@@ -119,6 +119,7 @@ export default function TasksPage() {
           <option value="all">{t('common.all')} — {t('task.status')}</option>
           <option value="todo">{t('task_status.todo')}</option>
           <option value="in_progress">{t('task_status.in_progress')}</option>
+          <option value="on_going">{t('task_status.on_going')}</option>
           <option value="done">{t('task_status.done')}</option>
           <option value="blocked">{t('task_status.blocked')}</option>
         </Select>

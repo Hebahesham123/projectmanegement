@@ -193,6 +193,7 @@ export default function ProjectsPage() {
           <option value="all">{t('common.all')} — {t('project.status')}</option>
           <option value="not_started">{t('status.not_started')}</option>
           <option value="in_progress">{t('status.in_progress')}</option>
+          <option value="on_going">{t('status.on_going')}</option>
           <option value="completed">{t('status.completed')}</option>
           <option value="delayed">{t('status.delayed')}</option>
         </Select>
