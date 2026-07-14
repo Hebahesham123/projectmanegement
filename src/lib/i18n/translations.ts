@@ -110,6 +110,9 @@ export const translations = {
     'dictate.stop': 'Stop dictation',
     'dictate.unsupported': 'Voice input is not supported in this browser',
     'dictate.error': 'Voice input error',
+    'translate.to_ar': 'Translate to Arabic',
+    'translate.to_en': 'Translate to English',
+    'translate.error': 'Translation error',
 
     'task_status.todo': 'To Do',
     'task_status.in_progress': 'In Progress',
@@ -257,6 +260,9 @@ export const translations = {
     'dictate.stop': 'إيقاف الإملاء',
     'dictate.unsupported': 'الإدخال الصوتي غير مدعوم في هذا المتصفح',
     'dictate.error': 'خطأ في الإدخال الصوتي',
+    'translate.to_ar': 'ترجمة إلى العربية',
+    'translate.to_en': 'ترجمة إلى الإنجليزية',
+    'translate.error': 'خطأ في الترجمة',
 
     'task_status.todo': 'للبدء',
     'task_status.in_progress': 'قيد التنفيذ',

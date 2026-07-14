@@ -13,6 +13,7 @@ import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import { UserX } from 'lucide-react';
 import { DictateButton } from '@/components/ui/DictateButton';
+import { TranslateButton } from '@/components/ui/TranslateButton';
 import { logActivity } from '@/lib/activity/log';
 import type { Task, TaskStatus } from '@/lib/types';
 
@@ -204,15 +205,21 @@ export function TaskForm({ projectId, initial, onDone, readOnly = false }: { pro
       <div>
         <div className="flex items-center justify-between">
           <Label htmlFor="description">{t('task.description')}</Label>
-          <DictateButton
-            onTranscript={(chunk) =>
-              setForm(f => {
-                const prev = f.description ?? '';
-                const sep = prev && !prev.endsWith(' ') ? ' ' : '';
-                return { ...f, description: prev + sep + chunk };
-              })
-            }
-          />
+          <div className="flex items-center gap-2">
+            <TranslateButton
+              text={form.description ?? ''}
+              onTranslated={(translated) => setForm(f => ({ ...f, description: translated }))}
+            />
+            <DictateButton
+              onTranscript={(chunk) =>
+                setForm(f => {
+                  const prev = f.description ?? '';
+                  const sep = prev && !prev.endsWith(' ') ? ' ' : '';
+                  return { ...f, description: prev + sep + chunk };
+                })
+              }
+            />
+          </div>
         </div>
         <Textarea id="description" value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} />
       </div>

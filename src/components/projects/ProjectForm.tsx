@@ -13,6 +13,7 @@ import { DEPARTMENTS_TOP, DEPARTMENT_GROUPS, PROJECT_MANAGERS } from '@/lib/cons
 import { notify, buildEmail } from '@/lib/notifications/notify';
 import toast from 'react-hot-toast';
 import { DictateButton } from '@/components/ui/DictateButton';
+import { TranslateButton } from '@/components/ui/TranslateButton';
 import { logActivity } from '@/lib/activity/log';
 import type { Project, ProjectStatus } from '@/lib/types';
 
@@ -287,15 +288,21 @@ export function ProjectForm({ initial, onDone, readOnly = false }: { initial?: P
       <div>
         <div className="flex items-center justify-between">
           <Label htmlFor="description">{t('project.description')}</Label>
-          <DictateButton
-            onTranscript={(chunk) =>
-              setForm(f => {
-                const prev = f.description ?? '';
-                const sep = prev && !prev.endsWith(' ') ? ' ' : '';
-                return { ...f, description: prev + sep + chunk };
-              })
-            }
-          />
+          <div className="flex items-center gap-2">
+            <TranslateButton
+              text={form.description ?? ''}
+              onTranslated={(translated) => setForm(f => ({ ...f, description: translated }))}
+            />
+            <DictateButton
+              onTranscript={(chunk) =>
+                setForm(f => {
+                  const prev = f.description ?? '';
+                  const sep = prev && !prev.endsWith(' ') ? ' ' : '';
+                  return { ...f, description: prev + sep + chunk };
+                })
+              }
+            />
+          </div>
         </div>
         <Textarea id="description" value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} />
       </div>
