@@ -19,9 +19,9 @@ declare
   _name  text;
   _uid   uuid;
   _users text[][] := array[
-    array['osama.erian@nstextile-eg.com',    'Osama Erian'],
-    array['khaled.alnemr@nstextile-eg.com',  'Khaled Alnemr'],
-    array['mohamed.hussein@nstextile-eg.com','Mohamed Hussein']
+    array['osama.erian@naguibselim.com',    'Osama Erian'],
+    array['khaled.alnemr@naguibselim.com',  'Khaled Alnemr'],
+    array['mohamed.hussein@naguibselim.com','Mohamed Hussein']
   ];
   i int;
 begin
@@ -89,8 +89,8 @@ end $$;
 select id, email, full_name, role
   from public.users
  where email in (
-   'osama.erian@nstextile-eg.com',
-   'khaled.alnemr@nstextile-eg.com',
-   'mohamed.hussein@nstextile-eg.com'
+   'osama.erian@naguibselim.com',
+   'khaled.alnemr@naguibselim.com',
+   'mohamed.hussein@naguibselim.com'
  )
  order by email;

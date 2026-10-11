@@ -10,7 +10,7 @@ export type ActivityAction =
   | 'assigned'
   | 'commented';
 
-const ACTIVITY_LOG_VIEWERS = ['mohamed.naguib@nstextile-eg.com'];
+const ACTIVITY_LOG_VIEWERS = ['mohamed.naguib@naguibselim.com'];
 
 export function canViewActivityLog(profile: UserProfile | null | undefined): boolean {
   if (!profile) return false;

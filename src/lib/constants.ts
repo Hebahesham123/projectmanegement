@@ -52,23 +52,23 @@ export type Department = string;
 export const PROJECT_MANAGERS = [
   'Rehab Ibrahim',
   'Farah Ashraf',
-  'Anjie Magdy',
 ] as const;
 
-// Allowed Project Owners (the 4 admins)
+// Allowed Project Owners (the admins). canEditDelete() matches these on the
+// lowercased public.users.full_name, so each entry must match the DB exactly.
 export const PROJECT_OWNERS = [
   'Karim Elbahey',
   'Rehab Ibrahim',
   'Farah Ashraf',
-  'Anjie Magdy',
+  'Manar Faisal',
 ] as const;
 
 // Users restricted to seeing only their own projects/tasks.
 // Match by email (case-insensitive).
 export const RESTRICTED_USER_EMAILS = [
-  'osama.erian@nstextile-eg.com',
-  'khaled.alnemr@nstextile-eg.com',
-  'mohamed.hussein@nstextile-eg.com',
+  'osama.erian@naguibselim.com',
+  'khaled.alnemr@naguibselim.com',
+  'mohamed.hussein@naguibselim.com',
 ] as const;
 
 export function isRestrictedEmail(email?: string | null) {

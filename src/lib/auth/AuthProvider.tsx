@@ -100,7 +100,7 @@ const ALLOWED_EDIT_DELETE_NAMES = new Set<string>(
   PROJECT_OWNERS.map(n => n.toLowerCase())
 );
 const ALLOWED_EDIT_DELETE_FIRST_NAMES = new Set<string>([
-  'karim', 'farah', 'anjie', 'angie', 'rehab',
+  'karim', 'farah', 'rehab', 'manar',
 ]);
 
 export function canEditDelete(profile?: UserProfile | null) {
