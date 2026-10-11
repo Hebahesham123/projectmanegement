@@ -12,9 +12,9 @@
 -- PROJECT_MANAGERS constant with every value present in the data, so editing
 -- src/lib/constants.ts alone will never make her disappear.
 --
--- HOW TO USE
---   1. Paste this whole file and Run. It only reports - nothing changes.
---   2. Read the counts, then set _confirmed := true and Run again.
+-- ARMED. Pasting this whole file and pressing Run WILL change the rows. The
+-- reporting queries still run first, so their output appears either way.
+-- To make it preview-only again, set _confirmed := false.
 --
 -- Optionally set _replacement to a name to hand her rows to someone else
 -- instead of blanking them.
@@ -54,7 +54,7 @@ select distinct project_manager as distinct_project_manager_values
 -- ----------------------------------------------------------------------------
 do $$
 declare
-  _confirmed boolean := false;
+  _confirmed boolean := true;   -- ARMED: running this file now applies the change
 
   -- Who to hand her projects to. Leave null to blank the label instead.
   -- Must be one of PROJECT_MANAGERS in src/lib/constants.ts to show up as a

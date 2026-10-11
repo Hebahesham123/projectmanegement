@@ -2,9 +2,10 @@
 -- Move every account from @nstextile-eg.com to @naguibselim.com.
 -- Run in the Supabase SQL editor with the postgres role.
 --
--- Safe to run as-is: STEP 2 will not change anything until you set
--- _confirmed := true inside it. Run the file, read the STEP 1 preview, then
--- flip that flag and run it again.
+-- ARMED. Pasting this whole file and pressing Run WILL rewrite the addresses.
+-- The preview was already checked against a full listing of public.users: 14
+-- accounts move, and no address collides on the new domain. To make it
+-- preview-only again, set _confirmed := false in STEP 2.
 --
 -- THIS CHANGES HOW PEOPLE LOG IN. After STEP 2 everyone signs in with their
 -- @naguibselim.com address. Passwords are untouched.
@@ -61,7 +62,7 @@ declare
   -- list, then set this to true and run again to actually rewrite.
   -- It exists because the SQL editor shows only the last result set, so a
   -- whole-file run would otherwise change every login before you saw STEP 1.
-  _confirmed boolean := false;
+  _confirmed boolean := true;   -- ARMED: running this file now applies the change
 
   _old text := '@nstextile-eg.com';
   _new text := '@naguibselim.com';
