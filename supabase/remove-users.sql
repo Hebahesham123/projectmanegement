@@ -1,19 +1,17 @@
 -- ============================================================================
--- Remove accounts (Anjie, Feitaha, Hossam) by exact email address.
+-- Remove accounts by exact email address.
 -- Run in the Supabase SQL editor with the postgres role.
 --
--- HOW TO USE
---   1. Run supabase/list-users.sql to see the exact email spellings.
---   2. Paste those addresses into the _emails array below.
---   3. Paste this whole file into the SQL editor and Run.
+-- Currently set to delete ONE account: ahmed.fetiha@nstextile-eg.com
+-- (the person asked about as "Feitaha"). Paste this whole file and Run.
 --
--- Until you replace the placeholder addresses this file does nothing except
--- print a notice and list the accounts, so it is safe to run as-is.
+-- Asked for three - Anjie, Feitaha, Hossam - but only Fetiha has a login.
+-- A full listing of public.users contains no Anjie, Angie, Engy, Hossam or
+-- Hosam, under any spelling. Anjie Magdy appears in src/lib/constants.ts as
+-- a project owner but has never had an account. Add real addresses to the
+-- _emails array below if the other two turn up under different names.
+--
 -- Deleting a login cannot be undone.
---
--- Earlier versions of this file guessed at spellings from first names. That
--- kept aborting because the stored names differ from the guesses, so the
--- guessing is gone - addresses only.
 --
 -- What deleting a user does and does not destroy (per the FKs in schema.sql):
 --   kept, authorship blanked   projects.created_by, tasks.created_by,
@@ -37,11 +35,16 @@
 
 do $$
 declare
-  -- <<< PASTE THE EXACT EMAILS FROM list-users.sql HERE >>>
+  -- Accounts to delete, verified against list-users.sql output.
+  --
+  -- "Feitaha" is stored as Ahmed Fetiha. Deleting him clears the owner on
+  -- 17 projects and unassigns 16 tasks - see the notices for the list.
+  --
+  -- Anjie and Hossam are NOT in public.users at all (no Anjie / Angie / Engy /
+  -- Hossam / Hosam row exists), so there is nothing to delete for them. Add
+  -- their real addresses here if they turn up under different names.
   _emails text[] := array[
-    'REPLACE.ME.1@example.com',
-    'REPLACE.ME.2@example.com',
-    'REPLACE.ME.3@example.com'
+    'ahmed.fetiha@nstextile-eg.com'
   ];
 
   -- Never delete these, whatever is pasted above.
@@ -55,7 +58,7 @@ declare
   _n2   int;
   _miss text;
 begin
-  -- Not filled in yet: say so and stop, without failing the whole script.
+  -- Still holding a placeholder: say so and stop, without failing the script.
   if exists (select 1 from unnest(_emails) e where e like '%REPLACE.ME%') then
     raise notice '----------------------------------------------------------------';
     raise notice 'Nothing deleted. Run supabase/list-users.sql, then paste the';
